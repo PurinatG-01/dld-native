@@ -1,3 +1,9 @@
+// Load EXPO_PUBLIC_* vars from .env before Babel transforms them
+try {
+  const { load } = require("@expo/env");
+  load(process.cwd());
+} catch (_) {}
+
 module.exports = {
   preset: "jest-expo",
   setupFilesAfterEnv: ["./jest.setup.ts"],
