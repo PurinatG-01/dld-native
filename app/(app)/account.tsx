@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, Alert, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { User, Settings } from "lucide-react-native";
 import { supabase } from "@/lib/supabase/client";
 import { getUserProfile, type UserProfile } from "@/lib/services/user";
@@ -10,6 +11,7 @@ const MUTED = "#64748b";
 
 export default function AccountScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [email, setEmail] = useState("");
 
@@ -41,7 +43,8 @@ export default function AccountScreen() {
   return (
     <ScrollView
       className="flex-1 bg-background"
-      contentContainerClassName="max-w-lg self-center w-full px-4 py-8 gap-6"
+      contentContainerClassName="max-w-lg self-center w-full px-4 gap-6"
+      contentContainerStyle={{ paddingTop: Math.max(insets.top, 24) + 8, paddingBottom: Math.max(insets.bottom, 16) + 49 }}
     >
       <Text className="text-2xl font-bold text-foreground">Account</Text>
 

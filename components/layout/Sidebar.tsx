@@ -41,7 +41,7 @@ export function Sidebar({ displayName, email }: SidebarProps) {
 
   return (
     <View className="w-64 bg-card border-r border-border flex-col h-full">
-      <View className="p-6 flex-row items-center gap-3">
+      <View className="p-6 flex-row items-center gap-3" style={{ paddingTop: Math.max(insets.top, 24) }}>
         <View className="w-10 h-10 rounded-xl bg-primary items-center justify-center">
           <Stethoscope size={20} color="#ffffff" />
         </View>

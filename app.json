@@ -27,6 +27,7 @@
     "plugins": [
       "expo-router",
       "expo-dev-client",
+      "react-native-bottom-tabs",
       "expo-font",
       [
         "expo-splash-screen",

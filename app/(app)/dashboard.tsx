@@ -5,13 +5,16 @@ import {
   TrendingUp,
   AlertCircle,
 } from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StatCard } from "@/components/dashboard/StatCard";
 
 export default function DashboardScreen() {
+  const insets = useSafeAreaInsets();
   return (
     <ScrollView
       className="flex-1 bg-background"
       contentContainerClassName="p-6"
+      contentContainerStyle={{ paddingTop: Math.max(insets.top, 24) }}
     >
       <View className="mb-6">
         <Text className="text-2xl font-bold text-foreground tracking-tight">

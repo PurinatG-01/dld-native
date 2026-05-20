@@ -2,11 +2,12 @@ import { useEffect, useState } from "react";
 import { View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Tabs, Redirect } from "expo-router";
-import { LayoutDashboard, Package, UserCircle } from "lucide-react-native";
+import { NativeTabs } from "expo-router/unstable-native-tabs";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase/client";
 import { getUserProfile, type UserProfile } from "@/lib/services/user";
 import { Sidebar } from "@/components/layout/Sidebar";
+import { LayoutDashboard, Package, UserCircle } from "lucide-react-native";
 
 const BREAKPOINT = 768;
 
@@ -43,12 +44,10 @@ export default function AppLayout() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Show blank while session loads — avoids flash before redirect
   if (session === undefined) {
     return <View style={{ flex: 1, backgroundColor: "#f8fafc" }} />;
   }
 
-  // Not authenticated — let expo-router redirect declaratively
   if (!session) {
     return <Redirect href="/auth/login" />;
   }
@@ -56,53 +55,37 @@ export default function AppLayout() {
   const displayName = profile?.name ?? session.user.email ?? "User";
   const email = profile?.email ?? session.user.email ?? "";
 
-  return (
-    <View style={{ flex: 1, flexDirection: isWide ? "row" : "column", paddingTop: insets.top, backgroundColor: "#f8fafc" }}>
-      {isWide && <Sidebar displayName={displayName} email={email} />}
-      <View style={{ flex: 1 }}>
-        <Tabs
-          screenOptions={{
-            headerShown: false,
-            tabBarStyle: isWide
-              ? { display: "none" }
-              : {
-                  backgroundColor: COLORS.card,
-                  borderTopColor: COLORS.border,
-                  height: 64,
-                },
-            tabBarActiveTintColor: COLORS.primary,
-            tabBarInactiveTintColor: COLORS.muted,
-            tabBarLabelStyle: {
-              fontSize: 10,
-              fontWeight: "600",
-            },
-          }}
-        >
-          <Tabs.Screen
-            name="dashboard"
-            options={{
-              title: "Dashboard",
-              tabBarIcon: ({ color }) => (
-                <LayoutDashboard size={22} color={color} />
-              ),
-            }}
-          />
-          <Tabs.Screen
-            name="inventory"
-            options={{
-              title: "Inventory",
-              tabBarIcon: ({ color }) => <Package size={22} color={color} />,
-            }}
-          />
-          <Tabs.Screen
-            name="account"
-            options={{
-              title: "Account",
-              tabBarIcon: ({ color }) => <UserCircle size={22} color={color} />,
-            }}
-          />
-        </Tabs>
+  // iPad wide: sidebar drives navigation, tab bar is hidden
+  if (isWide) {
+    return (
+      <View style={{ flex: 1, flexDirection: "row", backgroundColor: "#f8fafc" }}>
+        <Sidebar displayName={displayName} email={email} />
+        <View style={{ flex: 1 }}>
+          <Tabs screenOptions={{ headerShown: false, tabBarStyle: { display: "none" } }}>
+            <Tabs.Screen name="dashboard" options={{ title: "Dashboard" }} />
+            <Tabs.Screen name="inventory" options={{ title: "Inventory" }} />
+            <Tabs.Screen name="account" options={{ title: "Account" }} />
+          </Tabs>
+        </View>
       </View>
-    </View>
+    );
+  }
+
+  // iPhone: native UITabBar via react-native-bottom-tabs, SF Symbols icons
+  return (
+    <NativeTabs tintColor={COLORS.primary}>
+      <NativeTabs.Trigger
+        name="dashboard"
+        options={{ title: "Dashboard", icon: { sf: "house" } }}
+      />
+      <NativeTabs.Trigger
+        name="inventory"
+        options={{ title: "Inventory", icon: { sf: "shippingbox" } }}
+      />
+      <NativeTabs.Trigger
+        name="account"
+        options={{ title: "Account", icon: { sf: "person.circle" } }}
+      />
+    </NativeTabs>
   );
 }

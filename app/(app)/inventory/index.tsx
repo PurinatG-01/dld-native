@@ -8,6 +8,7 @@ import {
   ScrollView,
   Pressable,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import {
   Package,
@@ -66,6 +67,7 @@ function SkeletonRow() {
 
 export default function InventoryScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [meta, setMeta] = useState<ListItemsMeta | null>(null);
   const [page, setPage] = useState(1);
@@ -132,7 +134,7 @@ export default function InventoryScreen() {
 
   return (
     <View className="flex-1 bg-background">
-      <View className="p-6 pb-3">
+      <View className="p-6 pb-3" style={{ paddingTop: Math.max(insets.top, 24) }}>
         <View className="flex-row items-center gap-3 mb-6">
           <Package size={20} color={PRIMARY} />
           <Text className="text-2xl font-bold text-foreground tracking-tight">
@@ -240,7 +242,32 @@ export default function InventoryScreen() {
         <FlatList
           data={items}
           keyExtractor={(item) => item.id}
-          contentContainerClassName="pb-6"
+          contentContainerStyle={{ paddingBottom: insets.bottom + 65 }}
+          ListFooterComponent={
+            meta && meta.total_pages > 1 ? (
+              <View className="flex-row items-center justify-between px-6 py-3 mt-2 border-t border-border bg-card">
+                <Text className="text-xs text-muted-foreground">
+                  {meta.total} items · page {meta.page} of {meta.total_pages}
+                </Text>
+                <View className="flex-row gap-2">
+                  <TouchableOpacity
+                    onPress={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                    className={`w-9 h-9 rounded-lg border border-border items-center justify-center ${page === 1 ? "opacity-40" : ""}`}
+                  >
+                    <ChevronLeft size={16} color={MUTED} />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => setPage((p) => Math.min(meta.total_pages, p + 1))}
+                    disabled={page === meta.total_pages}
+                    className={`w-9 h-9 rounded-lg border border-border items-center justify-center ${page === meta.total_pages ? "opacity-40" : ""}`}
+                  >
+                    <ChevronRight size={16} color={MUTED} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ) : null
+          }
           ListEmptyComponent={
             <View className="py-16 items-center">
               <Text className="text-sm text-muted-foreground">
@@ -291,33 +318,6 @@ export default function InventoryScreen() {
         />
       )}
 
-      {meta && meta.total_pages > 1 && (
-        <View className="flex-row items-center justify-between px-6 py-3 border-t border-border bg-card">
-          <Text className="text-xs text-muted-foreground">
-            {meta.total} items · page {meta.page} of {meta.total_pages}
-          </Text>
-          <View className="flex-row gap-2">
-            <TouchableOpacity
-              onPress={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className={`w-9 h-9 rounded-lg border border-border items-center justify-center ${
-                page === 1 ? "opacity-40" : ""
-              }`}
-            >
-              <ChevronLeft size={16} color={MUTED} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => setPage((p) => Math.min(meta.total_pages, p + 1))}
-              disabled={page === meta.total_pages}
-              className={`w-9 h-9 rounded-lg border border-border items-center justify-center ${
-                page === meta.total_pages ? "opacity-40" : ""
-              }`}
-            >
-              <ChevronRight size={16} color={MUTED} />
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
     </View>
   );
 }
