@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Tabs, useRouter } from "expo-router";
+import { Tabs, Redirect } from "expo-router";
 import { LayoutDashboard, Package, UserCircle } from "lucide-react-native";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase/client";
@@ -21,23 +21,40 @@ export default function AppLayout() {
   const { width } = useWindowDimensions();
   const isWide = width >= BREAKPOINT;
   const insets = useSafeAreaInsets();
-  const router = useRouter();
+  const [session, setSession] = useState<Session | null | undefined>(undefined);
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
-        router.replace("/auth/login");
-        return;
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        setSession(session);
+        if (session) getUserProfile(session.user.id).then(setProfile);
+      })
+      .catch(() => setSession(null));
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setSession(session);
+        if (session) getUserProfile(session.user.id).then(setProfile);
+        else setProfile(null);
       }
-      setSession(session);
-      getUserProfile(session.user.id).then(setProfile);
-    });
+    );
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const displayName = profile?.name ?? session?.user?.email ?? "User";
-  const email = profile?.email ?? session?.user?.email ?? "";
+  // Show blank while session loads — avoids flash before redirect
+  if (session === undefined) {
+    return <View style={{ flex: 1, backgroundColor: "#f8fafc" }} />;
+  }
+
+  // Not authenticated — let expo-router redirect declaratively
+  if (!session) {
+    return <Redirect href="/auth/login" />;
+  }
+
+  const displayName = profile?.name ?? session.user.email ?? "User";
+  const email = profile?.email ?? session.user.email ?? "";
 
   return (
     <View style={{ flex: 1, flexDirection: isWide ? "row" : "column", paddingTop: insets.top, backgroundColor: "#f8fafc" }}>
