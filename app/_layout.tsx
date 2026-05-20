@@ -13,34 +13,27 @@ export default function RootLayout() {
   const segments = useSegments();
   const [session, setSession] = useState<Session | null | undefined>(undefined);
 
+  // Hide splash as soon as the layout mounts — do not wait for Supabase.
+  // Auth redirect is handled separately once the session resolves.
   useEffect(() => {
-    // Fallback: if AsyncStorage is slow on physical devices, unblock after 5 s
-    const fallback = setTimeout(() => setSession((s) => (s === undefined ? null : s)), 5000);
+    SplashScreen.hideAsync().catch(() => {});
+  }, []);
 
+  useEffect(() => {
     supabase.auth.getSession()
       .then(({ data: { session } }) => setSession(session))
-      .catch(() => setSession(null))
-      .finally(() => clearTimeout(fallback));
+      .catch(() => setSession(null));
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => setSession(session)
+    );
 
-    return () => {
-      clearTimeout(fallback);
-      subscription.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
     if (session === undefined) return;
-
-    SplashScreen.hideAsync().catch(() => {});
-
     const inAuthGroup = segments[0] === "auth";
-
     if (!session && !inAuthGroup) {
       router.replace("/auth/login");
     } else if (session && inAuthGroup) {
