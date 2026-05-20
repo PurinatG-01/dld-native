@@ -14,9 +14,9 @@ export default function RootLayout() {
   const [session, setSession] = useState<Session | null | undefined>(undefined);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-    });
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => setSession(session))
+      .catch(() => setSession(null));
 
     const {
       data: { subscription },
@@ -30,7 +30,7 @@ export default function RootLayout() {
   useEffect(() => {
     if (session === undefined) return;
 
-    SplashScreen.hideAsync();
+    SplashScreen.hideAsync().catch(() => {});
 
     const inAuthGroup = segments[0] === "auth";
 
