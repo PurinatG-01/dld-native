@@ -7,14 +7,14 @@ import {
   FlatList,
   ScrollView,
   Pressable,
+  ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import {
   Package,
   Search,
-  ChevronLeft,
-  ChevronRight,
   ChevronUp,
   ChevronDown,
 } from "lucide-react-native";
@@ -22,13 +22,13 @@ import { CATEGORY_META } from "@/lib/category-meta";
 import {
   listItems,
   type InventoryItem,
-  type ListItemsMeta,
   type SortBy,
   type SortDir,
 } from "@/lib/services/inventory";
 import { Skeleton } from "@/components/ui/Skeleton";
 
 const PAGE_SIZE = 20;
+const SEARCH_DEBOUNCE_MS = 500;
 
 const SORT_COLUMNS: { key: SortBy; label: string }[] = [
   { key: "name", label: "Name" },
@@ -69,19 +69,33 @@ export default function InventoryScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [items, setItems] = useState<InventoryItem[]>([]);
-  const [meta, setMeta] = useState<ListItemsMeta | null>(null);
   const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
   const [searchInput, setSearchInput] = useState("");
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(""); // debounced search
   const [category, setCategory] = useState("");
   const [sortBy, setSortBy] = useState<SortBy>("name");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(
-    async (p: number, q: string, cat: string, sb: SortBy, sd: SortDir) => {
-      setLoading(true);
+  // Debounce searchInput → query
+  useEffect(() => {
+    const timer = setTimeout(() => setQuery(searchInput), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
+  const fetchPage = useCallback(
+    async (
+      p: number,
+      q: string,
+      cat: string,
+      sb: SortBy,
+      sd: SortDir,
+      append: boolean
+    ) => {
       setError(null);
       try {
         const result = await listItems({
@@ -92,24 +106,45 @@ export default function InventoryScreen() {
           sort_by: sb,
           sort_dir: sd,
         });
-        setItems(result.data);
-        setMeta(result.meta);
+        if (append) {
+          setItems((prev) => [...prev, ...result.data]);
+        } else {
+          setItems(result.data);
+        }
+        setPage(result.meta.page);
+        setHasMore(result.meta.page < result.meta.total_pages);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load inventory");
-      } finally {
-        setLoading(false);
       }
     },
     []
   );
 
+  // Reset and reload page 1 whenever filters change
   useEffect(() => {
-    load(page, query, category, sortBy, sortDir);
-  }, [page, query, category, sortBy, sortDir, load]);
+    setLoading(true);
+    setItems([]);
+    setHasMore(true);
+    fetchPage(1, query, category, sortBy, sortDir, false).finally(() =>
+      setLoading(false)
+    );
+  }, [query, category, sortBy, sortDir, fetchPage]);
 
-  function handleSearch() {
-    setPage(1);
-    setQuery(searchInput);
+  function handleLoadMore() {
+    if (loadingMore || loading || !hasMore) return;
+    setLoadingMore(true);
+    fetchPage(page + 1, query, category, sortBy, sortDir, true).finally(() =>
+      setLoadingMore(false)
+    );
+  }
+
+  function handleRefresh() {
+    setRefreshing(true);
+    setItems([]);
+    setHasMore(true);
+    fetchPage(1, query, category, sortBy, sortDir, false).finally(() =>
+      setRefreshing(false)
+    );
   }
 
   function handleSort(col: SortBy) {
@@ -119,7 +154,6 @@ export default function InventoryScreen() {
       setSortBy(col);
       setSortDir("asc");
     }
-    setPage(1);
   }
 
   function SortIndicator({ col }: { col: SortBy }) {
@@ -142,29 +176,17 @@ export default function InventoryScreen() {
           </Text>
         </View>
 
-        {/* Search */}
-        <View className="flex-row gap-2 mb-3">
-          <View className="flex-1 flex-row items-center border border-border rounded-lg bg-background px-3">
-            <Search size={16} color={MUTED} />
-            <TextInput
-              className="flex-1 ml-2 text-sm text-foreground py-3"
-              placeholder="Search items…"
-              placeholderTextColor="#94a3b8"
-              value={searchInput}
-              onChangeText={setSearchInput}
-              onSubmitEditing={handleSearch}
-              returnKeyType="search"
-            />
-          </View>
-          <TouchableOpacity
-            onPress={handleSearch}
-            className="bg-primary px-4 rounded-lg items-center justify-center"
-            activeOpacity={0.8}
-          >
-            <Text className="text-primary-foreground font-semibold text-sm">
-              Search
-            </Text>
-          </TouchableOpacity>
+        {/* Search — auto-triggers with debounce, no button needed */}
+        <View className="flex-row items-center border border-border rounded-lg bg-background px-3 mb-3">
+          <Search size={16} color={MUTED} />
+          <TextInput
+            className="flex-1 ml-2 text-sm text-foreground py-3"
+            placeholder="Search items…"
+            placeholderTextColor="#94a3b8"
+            value={searchInput}
+            onChangeText={setSearchInput}
+            returnKeyType="search"
+          />
         </View>
 
         {/* Category filter */}
@@ -179,10 +201,7 @@ export default function InventoryScreen() {
             return (
               <TouchableOpacity
                 key={cat || "__all__"}
-                onPress={() => {
-                  setCategory(cat);
-                  setPage(1);
-                }}
+                onPress={() => setCategory(cat)}
                 activeOpacity={0.7}
                 className={`px-3 py-1.5 rounded-full border ${
                   active ? "bg-primary border-primary" : "bg-card border-border"
@@ -243,28 +262,20 @@ export default function InventoryScreen() {
           data={items}
           keyExtractor={(item) => item.id}
           contentContainerStyle={{ paddingBottom: insets.bottom + 65 }}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.3}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor={PRIMARY}
+              colors={[PRIMARY]}
+            />
+          }
           ListFooterComponent={
-            meta && meta.total_pages > 1 ? (
-              <View className="flex-row items-center justify-between px-6 py-3 mt-2 border-t border-border bg-card">
-                <Text className="text-xs text-muted-foreground">
-                  {meta.total} items · page {meta.page} of {meta.total_pages}
-                </Text>
-                <View className="flex-row gap-2">
-                  <TouchableOpacity
-                    onPress={() => setPage((p) => Math.max(1, p - 1))}
-                    disabled={page === 1}
-                    className={`w-9 h-9 rounded-lg border border-border items-center justify-center ${page === 1 ? "opacity-40" : ""}`}
-                  >
-                    <ChevronLeft size={16} color={MUTED} />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={() => setPage((p) => Math.min(meta.total_pages, p + 1))}
-                    disabled={page === meta.total_pages}
-                    className={`w-9 h-9 rounded-lg border border-border items-center justify-center ${page === meta.total_pages ? "opacity-40" : ""}`}
-                  >
-                    <ChevronRight size={16} color={MUTED} />
-                  </TouchableOpacity>
-                </View>
+            loadingMore ? (
+              <View className="py-4 items-center">
+                <ActivityIndicator size="small" color={PRIMARY} />
               </View>
             ) : null
           }
@@ -317,7 +328,6 @@ export default function InventoryScreen() {
           }}
         />
       )}
-
     </View>
   );
 }
