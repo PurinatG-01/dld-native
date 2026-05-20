@@ -14,9 +14,13 @@ export default function RootLayout() {
   const [session, setSession] = useState<Session | null | undefined>(undefined);
 
   useEffect(() => {
+    // Fallback: if AsyncStorage is slow on physical devices, unblock after 5 s
+    const fallback = setTimeout(() => setSession((s) => (s === undefined ? null : s)), 5000);
+
     supabase.auth.getSession()
       .then(({ data: { session } }) => setSession(session))
-      .catch(() => setSession(null));
+      .catch(() => setSession(null))
+      .finally(() => clearTimeout(fallback));
 
     const {
       data: { subscription },
@@ -24,7 +28,10 @@ export default function RootLayout() {
       setSession(session);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      clearTimeout(fallback);
+      subscription.unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
