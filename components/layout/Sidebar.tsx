@@ -1,4 +1,5 @@
 import { View, Text, TouchableOpacity, Alert } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter, usePathname } from "expo-router";
 import {
   LayoutDashboard,
@@ -22,6 +23,7 @@ interface SidebarProps {
 export function Sidebar({ displayName, email }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const handleSignOut = () => {
     Alert.alert("Sign out", "Are you sure you want to sign out?", [
@@ -80,7 +82,7 @@ export function Sidebar({ displayName, email }: SidebarProps) {
         })}
       </View>
 
-      <View className="p-4 mt-auto border-t border-border">
+      <View className="px-4 pt-4 mt-auto border-t border-border" style={{ paddingBottom: Math.max(insets.bottom, 16) }}>
         <View className="flex-row items-center gap-3 mb-3">
           <View className="w-8 h-8 rounded-full bg-muted items-center justify-center">
             <User size={14} color="#64748b" />

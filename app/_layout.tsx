@@ -1,6 +1,8 @@
 import "../global.css";
 import { useEffect, useState } from "react";
-import { Stack, useRouter, useSegments, SplashScreen } from "expo-router";
+import { Stack, useRouter, useSegments } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase/client";
 
@@ -39,5 +41,9 @@ export default function RootLayout() {
     }
   }, [session, segments]);
 
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return (
+    <SafeAreaProvider>
+      <Stack screenOptions={{ headerShown: false }} />
+    </SafeAreaProvider>
+  );
 }

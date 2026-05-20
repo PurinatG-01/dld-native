@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { View, useWindowDimensions } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Tabs, useRouter } from "expo-router";
 import { LayoutDashboard, Package, UserCircle } from "lucide-react-native";
 import type { Session } from "@supabase/supabase-js";
@@ -19,6 +20,7 @@ const COLORS = {
 export default function AppLayout() {
   const { width } = useWindowDimensions();
   const isWide = width >= BREAKPOINT;
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -38,7 +40,7 @@ export default function AppLayout() {
   const email = profile?.email ?? session?.user?.email ?? "";
 
   return (
-    <View style={{ flex: 1, flexDirection: isWide ? "row" : "column" }}>
+    <View style={{ flex: 1, flexDirection: isWide ? "row" : "column", paddingTop: insets.top, backgroundColor: "#f8fafc" }}>
       {isWide && <Sidebar displayName={displayName} email={email} />}
       <View style={{ flex: 1 }}>
         <Tabs

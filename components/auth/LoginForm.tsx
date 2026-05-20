@@ -9,6 +9,7 @@ import {
   Platform,
   ScrollView,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Stethoscope } from "lucide-react-native";
 import { signInWithEmail } from "@/lib/services/auth";
@@ -35,8 +36,9 @@ export function LoginForm() {
   };
 
   return (
+    <SafeAreaView style={{ flex: 1 }} className="bg-background">
     <KeyboardAvoidingView
-      className="flex-1 bg-background"
+      style={{ flex: 1 }}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <ScrollView
@@ -113,5 +115,6 @@ export function LoginForm() {
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
