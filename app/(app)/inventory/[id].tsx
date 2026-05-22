@@ -1,26 +1,22 @@
-import { useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-} from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useEffect, useState } from "react"
+import { View, Text, ScrollView, TouchableOpacity } from "react-native"
+import { useLocalSearchParams, useRouter } from "expo-router"
 import {
   ChevronLeft,
   Package,
   AlertTriangle,
   Thermometer,
   ShieldAlert,
-} from "lucide-react-native";
-import { CATEGORY_META } from "@/lib/category-meta";
+} from "lucide-react-native"
+import { CATEGORY_META } from "@/lib/category-meta"
 import {
   getItemStock,
   type GetItemStockResult,
   type ItemStockRecord,
-} from "@/lib/services/inventory";
-import { Skeleton } from "@/components/ui/Skeleton";
-import { formatDate, isExpiringSoon } from "@/lib/utils";
+} from "@/lib/services/inventory"
+import { Skeleton } from "@/components/ui/Skeleton"
+import { formatDate, isExpiringSoon } from "@/lib/utils"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
 
 const STATUS_STYLES: Record<string, { bg: string; text: string }> = {
   pending: { bg: "bg-muted", text: "text-muted-foreground" },
@@ -30,20 +26,20 @@ const STATUS_STYLES: Record<string, { bg: string; text: string }> = {
   transferred: { bg: "bg-blue-100", text: "text-blue-700" },
   consumed: { bg: "bg-muted", text: "text-muted-foreground" },
   disposed: { bg: "bg-destructive/10", text: "text-destructive" },
-};
+}
 
-const DESTRUCTIVE = "#ef4444";
-const PRIMARY = "#4f46e5";
-const MUTED = "#64748b";
+const DESTRUCTIVE = "#ef4444"
+const PRIMARY = "#4f46e5"
+const MUTED = "#64748b"
 
 function MetaField({
   label,
   value,
   highlight,
 }: {
-  label: string;
-  value: string;
-  highlight?: boolean;
+  label: string
+  value: string
+  highlight?: boolean
 }) {
   return (
     <View className="w-1/2 mb-4">
@@ -61,17 +57,16 @@ function MetaField({
         </Text>
       </View>
     </View>
-  );
+  )
 }
 
 function StockRow({ stock }: { stock: ItemStockRecord }) {
-  const expiringSoon = isExpiringSoon(stock.expiry_date);
-  const expired =
-    stock.expiry_date && new Date(stock.expiry_date) < new Date();
+  const expiringSoon = isExpiringSoon(stock.expiry_date)
+  const expired = stock.expiry_date && new Date(stock.expiry_date) < new Date()
   const statusStyle = STATUS_STYLES[stock.status] ?? {
     bg: "bg-slate-100",
     text: "text-slate-500",
-  };
+  }
 
   return (
     <View className="px-4 py-3 border-b border-border">
@@ -94,8 +89,8 @@ function StockRow({ stock }: { stock: ItemStockRecord }) {
             expired
               ? "text-destructive font-medium"
               : expiringSoon
-              ? "text-orange-500 font-medium"
-              : "text-muted-foreground"
+                ? "text-orange-500 font-medium"
+                : "text-muted-foreground"
           }`}
         >
           Exp: {formatDate(stock.expiry_date)}
@@ -106,7 +101,7 @@ function StockRow({ stock }: { stock: ItemStockRecord }) {
         </Text>
       </View>
     </View>
-  );
+  )
 }
 
 function DetailSkeleton() {
@@ -141,31 +136,32 @@ function DetailSkeleton() {
         ))}
       </View>
     </View>
-  );
+  )
 }
 
 export default function InventoryDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const router = useRouter();
-  const [data, setData] = useState<GetItemStockResult | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { id } = useLocalSearchParams<{ id: string }>()
+  const router = useRouter()
+  const insets = useSafeAreaInsets()
+  const [data, setData] = useState<GetItemStockResult | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     getItemStock(id)
       .then(setData)
       .catch((e: unknown) =>
-        setError(e instanceof Error ? e.message : "Failed to load stock")
+        setError(e instanceof Error ? e.message : "Failed to load stock"),
       )
-      .finally(() => setLoading(false));
-  }, [id]);
+      .finally(() => setLoading(false))
+  }, [id])
 
   const totalQty =
-    data?.stocks.reduce((sum, s) => sum + s.quantity_on_hand, 0) ?? 0;
+    data?.stocks.reduce((sum, s) => sum + s.quantity_on_hand, 0) ?? 0
 
   return (
     <View className="flex-1 bg-background">
-      <View className="px-6 pt-6 pb-2">
+      <View className="px-6 pb-2" style={{ paddingTop: Math.max(insets.top, 24) }}>
         <TouchableOpacity
           onPress={() => router.back()}
           className="flex-row items-center gap-1"
@@ -192,22 +188,22 @@ export default function InventoryDetailScreen() {
           <View className="bg-card rounded-xl border border-border p-6">
             <View className="flex-row items-start gap-4 mb-5">
               {(() => {
-                const catMeta = CATEGORY_META[data.item.category];
+                const catMeta = CATEGORY_META[data.item.category]
                 if (catMeta) {
-                  const Icon = catMeta.icon;
+                  const Icon = catMeta.icon
                   return (
                     <View
                       className={`w-14 h-14 rounded-xl items-center justify-center ${catMeta.bg}`}
                     >
                       <Icon size={26} color={catMeta.iconColor} />
                     </View>
-                  );
+                  )
                 }
                 return (
                   <View className="w-14 h-14 rounded-xl bg-primary/10 items-center justify-center">
                     <Package size={24} color={PRIMARY} />
                   </View>
-                );
+                )
               })()}
 
               <View className="flex-1">
@@ -324,5 +320,5 @@ export default function InventoryDetailScreen() {
         </ScrollView>
       )}
     </View>
-  );
+  )
 }
