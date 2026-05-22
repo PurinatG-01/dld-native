@@ -44,6 +44,11 @@ export default function AppLayout() {
         name="account"
         options={{ title: "Account", icon: { sf: "person.circle" } }}
       />
+      <NativeTabs.Trigger
+        name="scanner"
+        role="search"
+        options={{ title: "Scan", icon: { sf: "qrcode.viewfinder" } }}
+      />
     </NativeTabs>
   );
 }
