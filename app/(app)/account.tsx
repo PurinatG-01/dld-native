@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, Alert, ScrollView } from "react-native";
+import { View, Text, Pressable, Alert, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { User, Settings } from "lucide-react-native";
@@ -72,23 +72,21 @@ export default function AccountScreen() {
             General
           </Text>
         </View>
-        <TouchableOpacity
-          className="flex-row items-center gap-3 px-5 py-4 active:bg-muted"
-          activeOpacity={0.7}
+        <Pressable
+          className="flex-row items-center gap-3 px-5 py-4 active:bg-muted/50"
         >
           <Settings size={16} color={useColor("muted-foreground")} />
           <Text className="text-sm text-foreground">Settings</Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       {/* Sign out */}
-      <TouchableOpacity
+      <Pressable
         onPress={handleSignOut}
-        activeOpacity={0.8}
-        className="border border-destructive/30 bg-destructive/5 rounded-xl py-3.5 items-center"
+        className="border border-destructive/30 bg-destructive/5 rounded-xl py-3.5 items-center active:opacity-70"
       >
         <Text className="text-sm font-semibold text-destructive">Sign out</Text>
-      </TouchableOpacity>
+      </Pressable>
     </ScrollView>
   );
 }

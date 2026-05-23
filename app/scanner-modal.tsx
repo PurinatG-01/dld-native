@@ -150,14 +150,13 @@ export default function ScannerModal() {
   if (!permission || !permission.granted) {
     return (
       <View className="flex-1 bg-black items-center justify-center px-6">
-        <TouchableOpacity
-          className="absolute right-5 w-10 h-10 rounded-full bg-black/50 items-center justify-center"
+        <Pressable
+          className="absolute right-5 w-10 h-10 rounded-full bg-black/50 items-center justify-center active:opacity-70"
           style={{ top: insets.top + 12 }}
           onPress={handleClose}
-          activeOpacity={0.7}
         >
           <X size={20} color={useColor("primary-foreground")} />
-        </TouchableOpacity>
+        </Pressable>
         <Text className="text-white text-base text-center leading-6">
           Camera access is required to scan items.{"\n"}Please enable it in
           Settings.

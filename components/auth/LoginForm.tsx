@@ -3,7 +3,7 @@ import {
   View,
   Text,
   TextInput,
-  TouchableOpacity,
+  Pressable,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
@@ -99,11 +99,10 @@ export function LoginForm() {
             editable={!loading}
           />
 
-          <TouchableOpacity
-            className="bg-primary rounded-lg py-3.5 items-center"
+          <Pressable
+            className="bg-primary rounded-lg py-3.5 items-center active:opacity-70"
             onPress={handleLogin}
             disabled={loading}
-            activeOpacity={0.8}
           >
             {loading ? (
               <ActivityIndicator color={useColor("primary-foreground")} size="small" />
@@ -112,7 +111,7 @@ export function LoginForm() {
                 Sign in
               </Text>
             )}
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
