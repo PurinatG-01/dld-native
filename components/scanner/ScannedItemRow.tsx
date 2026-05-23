@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import { Plus, Minus, Package } from "lucide-react-native";
 import { PRIMARY } from "./constants";
 import type { ScannedItem } from "./types";
@@ -14,7 +14,7 @@ export function ScannedItemRow({ item, isJustAdded, onIncrement, onDecrement }: 
   return (
     <View
       className="flex-row items-center px-4 py-3 border-b border-border"
-      style={isJustAdded ? styles.rowSuccess : undefined}
+      style={isJustAdded ? { backgroundColor: "rgba(5,46,22,0.2)", borderLeftWidth: 2, borderLeftColor: "#16a34a" } : undefined}
     >
       <View className="w-9 h-9 rounded-xl bg-primary/10 items-center justify-center">
         <Package size={18} color={PRIMARY} />
@@ -50,10 +50,3 @@ export function ScannedItemRow({ item, isJustAdded, onIncrement, onDecrement }: 
   );
 }
 
-const styles = StyleSheet.create({
-  rowSuccess: {
-    backgroundColor: "rgba(5,46,22,0.2)",
-    borderLeftWidth: 2,
-    borderLeftColor: "#16a34a",
-  },
-});

@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text } from "react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -58,7 +58,7 @@ export function ScannerSheet({
     scanState.status === "success" ? scanState.barcode : null;
 
   return (
-    <Animated.View className="bg-card" style={[styles.sheet, sheetAnimatedStyle]}>
+    <Animated.View className="bg-card absolute inset-x-0 top-0" style={[{ bottom: -SCREEN_HEIGHT }, sheetAnimatedStyle]}>
       <Animated.View
         className="rounded-t-2xl overflow-hidden bg-card"
         style={innerHeightStyle}
@@ -91,12 +91,3 @@ export function ScannerSheet({
   );
 }
 
-const styles = StyleSheet.create({
-  sheet: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: -SCREEN_HEIGHT,
-  },
-});

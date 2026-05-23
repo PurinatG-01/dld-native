@@ -24,7 +24,11 @@ export function ScannerStatusPill({ scanStatus }: Props) {
   }));
 
   return (
-    <Animated.View style={[styles.pillWrapper, pillAnimatedStyle]} pointerEvents="none">
+    <Animated.View
+      className="absolute inset-x-0 items-center"
+      style={[{ top: SHEET_TOP - 52 }, pillAnimatedStyle]}
+      pointerEvents="none"
+    >
       {scanStatus === "loading" && (
         <View
           className="flex-row items-center gap-1.5 rounded-full px-3.5 py-1.5"
@@ -65,13 +69,6 @@ export function ScannerStatusPill({ scanStatus }: Props) {
 }
 
 const styles = StyleSheet.create({
-  pillWrapper: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    top: SHEET_TOP - 52,
-    alignItems: "center",
-  },
   pillScanning: {
     backgroundColor: "rgba(0,0,0,0.65)",
     borderWidth: StyleSheet.hairlineWidth,
