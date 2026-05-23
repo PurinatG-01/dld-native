@@ -6,8 +6,7 @@ import { User, Settings } from "lucide-react-native";
 import { supabase } from "@/lib/supabase/client";
 import { getUserProfile, type UserProfile } from "@/lib/services/user";
 import { signOut } from "@/lib/services/auth";
-
-const MUTED = "#64748b";
+import { useColor } from "@/lib/useColor";
 
 export default function AccountScreen() {
   const router = useRouter();
@@ -51,7 +50,7 @@ export default function AccountScreen() {
       {/* Profile card */}
       <View className="bg-card border border-border rounded-2xl p-5 flex-row items-center gap-4">
         <View className="w-14 h-14 rounded-full bg-muted items-center justify-center">
-          <User size={24} color={MUTED} />
+          <User size={24} color={useColor("muted-foreground")} />
         </View>
         <View className="flex-1">
           <Text
@@ -77,7 +76,7 @@ export default function AccountScreen() {
           className="flex-row items-center gap-3 px-5 py-4 active:bg-muted"
           activeOpacity={0.7}
         >
-          <Settings size={16} color={MUTED} />
+          <Settings size={16} color={useColor("muted-foreground")} />
           <Text className="text-sm text-foreground">Settings</Text>
         </TouchableOpacity>
       </View>

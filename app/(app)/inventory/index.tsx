@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { useRouter } from "expo-router"
 import { Package, Search, ChevronUp, ChevronDown } from "lucide-react-native"
 import { CATEGORY_META } from "@/lib/category-meta"
+import { useColor } from "@/lib/useColor"
 import {
   listItems,
   type InventoryItem,
@@ -31,9 +32,6 @@ const SORT_COLUMNS: { key: SortBy; label: string }[] = [
   { key: "unit_of_measure", label: "Unit" },
 ]
 
-const PRIMARY = "#4f46e5"
-const MUTED = "#64748b"
-
 function CategoryIcon({ category }: { category: string }) {
   const meta = CATEGORY_META[category]
   if (!meta) return <View className="w-9 h-9 rounded-xl bg-muted" />
@@ -42,7 +40,7 @@ function CategoryIcon({ category }: { category: string }) {
     <View
       className={`w-9 h-9 rounded-xl items-center justify-center ${meta.bg}`}
     >
-      <Icon size={18} color={meta.iconColor} />
+      <Icon size={18} color={useColor(meta.iconColorToken)} />
     </View>
   )
 }
@@ -153,11 +151,11 @@ export default function InventoryScreen() {
 
   function SortIndicator({ col }: { col: SortBy }) {
     if (col !== sortBy)
-      return <ChevronUp size={10} color="#cbd5e1" style={{ marginLeft: 2 }} />
+      return <ChevronUp size={10} color={useColor("inactive")} className="ml-0.5" />
     return sortDir === "asc" ? (
-      <ChevronUp size={10} color={PRIMARY} style={{ marginLeft: 2 }} />
+      <ChevronUp size={10} color={useColor("primary")} className="ml-0.5" />
     ) : (
-      <ChevronDown size={10} color={PRIMARY} style={{ marginLeft: 2 }} />
+      <ChevronDown size={10} color={useColor("primary")} className="ml-0.5" />
     )
   }
 
@@ -168,7 +166,7 @@ export default function InventoryScreen() {
         style={{ paddingTop: Math.max(insets.top, 24) }}
       >
         <View className="flex-row items-center gap-3 mb-6">
-          <Package size={20} color={PRIMARY} />
+          <Package size={20} color={useColor("primary")} />
           <Text className="text-2xl font-bold text-foreground tracking-tight">
             Inventory
           </Text>
@@ -176,11 +174,11 @@ export default function InventoryScreen() {
 
         {/* Search — auto-triggers with debounce, no button needed */}
         <View className="flex-row items-center border border-border rounded-lg bg-background px-3 mb-3">
-          <Search size={16} color={MUTED} />
+          <Search size={16} color={useColor("muted-foreground")} />
           <TextInput
             className="flex-1 ml-2 text-sm text-foreground py-3"
             placeholder="Search items…"
-            placeholderTextColor="#94a3b8"
+            placeholderTextColor={useColor("placeholder")}
             value={searchInput}
             onChangeText={setSearchInput}
             returnKeyType="search"
@@ -258,14 +256,14 @@ export default function InventoryScreen() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={handleRefresh}
-              tintColor={PRIMARY}
-              colors={[PRIMARY]}
+              tintColor={useColor("primary")}
+              colors={[useColor("primary")]}
             />
           }
           ListFooterComponent={
             loadingMore ? (
               <View className="py-4 items-center">
-                <ActivityIndicator size="small" color={PRIMARY} />
+                <ActivityIndicator size="small" color={useColor("primary")} />
               </View>
             ) : null
           }

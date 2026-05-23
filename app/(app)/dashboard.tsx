@@ -7,6 +7,7 @@ import {
 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StatCard } from "@/components/dashboard/StatCard";
+import { useColor } from "@/lib/useColor";
 
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
@@ -36,33 +37,33 @@ export default function DashboardScreen() {
           value="—"
           icon={Package}
           bgClassName="bg-primary"
-          iconColor="#ffffff"
+          iconColor={useColor("primary-foreground")}
         />
         <StatCard
           label="In Stock"
           value="—"
           icon={Activity}
           bgClassName="bg-emerald-500"
-          iconColor="#ffffff"
+          iconColor={useColor("primary-foreground")}
         />
         <StatCard
           label="Low Stock"
           value="—"
           icon={AlertCircle}
           bgClassName="bg-destructive"
-          iconColor="#ffffff"
+          iconColor={useColor("primary-foreground")}
         />
         <StatCard
           label="Expiring Soon"
           value="—"
           icon={TrendingUp}
           bgClassName="bg-amber-500"
-          iconColor="#ffffff"
+          iconColor={useColor("primary-foreground")}
         />
       </ScrollView>
 
       <View className="bg-card rounded-xl border border-border p-12 items-center">
-        <Package size={36} color="#94a3b8" />
+        <Package size={36} color={useColor("placeholder")} />
         <Text className="text-sm font-bold text-muted-foreground mt-3">
           Stock table — connecting to real data next
         </Text>

@@ -22,17 +22,9 @@ import {
   CORNER_THICKNESS,
   SHEET_TOP,
   SNAP_COLLAPSED,
-  PRIMARY_LIGHT,
-  ERROR_FOREGROUND,
 } from "@/components/scanner/constants";
-import type { ScanState, ScanAction, ScannedItem } from "@/components/scanner/types";
-
-const FINDER_COLOR: Record<ScanState["status"], string> = {
-  idle: "rgba(255,255,255,0.85)",
-  loading: PRIMARY_LIGHT,
-  success: "rgba(255,255,255,0.85)",
-  error: ERROR_FOREGROUND,
-};
+import { useColor } from "@/lib/useColor";
+import type { ScanState, ScanAction, ScannedItem, ScanStatus } from "@/components/scanner/types";
 
 function scanReducer(state: ScanState, action: ScanAction): ScanState {
   switch (action.type) {
@@ -58,6 +50,13 @@ export default function ScannerModal() {
   const [permission, requestPermission] = useCameraPermissions();
   const [scannedItems, setScannedItems] = useState<ScannedItem[]>([]);
   const [scanState, dispatch] = useReducer(scanReducer, { status: "idle" });
+
+  const finderColorMap: Record<ScanStatus, string> = {
+    idle: "rgba(255,255,255,0.85)",
+    loading: useColor("primary-light"),
+    success: "rgba(255,255,255,0.85)",
+    error: useColor("error-foreground"),
+  };
 
   const translateY = useSharedValue(SNAP_COLLAPSED);
   const sweepProgress = useSharedValue(0);
@@ -157,7 +156,7 @@ export default function ScannerModal() {
           onPress={handleClose}
           activeOpacity={0.7}
         >
-          <X size={20} color="white" />
+          <X size={20} color={useColor("primary-foreground")} />
         </TouchableOpacity>
         <Text className="text-white text-base text-center leading-6">
           Camera access is required to scan items.{"\n"}Please enable it in
@@ -167,7 +166,8 @@ export default function ScannerModal() {
     );
   }
 
-  const finderColor = FINDER_COLOR[scanState.status];
+  const finderColor = finderColorMap[scanState.status];
+  const primaryLight = useColor("primary-light");
 
   return (
     <View className="flex-1 bg-black">
@@ -203,7 +203,7 @@ export default function ScannerModal() {
               {scanState.status === "loading" && (
                 <Animated.View
                   className="absolute left-1 right-1 bg-primary-light"
-                  style={[{ height: 1.5, shadowColor: PRIMARY_LIGHT, shadowOpacity: 0.8, shadowRadius: 4 }, sweepAnimatedStyle]}
+                  style={[{ height: 1.5, shadowColor: primaryLight, shadowOpacity: 0.8, shadowRadius: 4 }, sweepAnimatedStyle]}
                 />
               )}
             </View>
@@ -228,7 +228,7 @@ export default function ScannerModal() {
         onPress={handleClose}
         activeOpacity={0.7}
       >
-        <X size={20} color="white" />
+        <X size={20} color={useColor("primary-foreground")} />
       </TouchableOpacity>
 
       <ScannerStatusPill scanStatus={scanState.status} />

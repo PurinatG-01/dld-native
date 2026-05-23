@@ -8,6 +8,8 @@
 
 **Tech Stack:** Expo SDK 52, Expo Router v4, NativeWind v4, `@supabase/supabase-js` v2, `@react-native-async-storage/async-storage`, `lucide-react-native`, TypeScript, Jest + `@testing-library/react-native`
 
+> **Color architecture note:** This plan was written before the design token system was fully extracted. The final implementation centralises all hex values in `tailwind.config.js` and resolves them for JS props (icon `color`, `placeholderTextColor`, etc.) via the `useColor()` hook from `@/lib/useColor`. Category icon colors are stored as token names (`iconColorToken: ColorToken`) rather than raw hex. See `AGENTS.md` → Styling Rules for the current conventions.
+
 ---
 
 ## File Map
@@ -518,9 +520,9 @@ export type MovementType =
   | "DISPOSE";
 ```
 
-- [ ] **Step 2: Create `lib/category-meta.ts`**
+- [x] **Step 2: Create `lib/category-meta.ts`** (updated)
 
-Icons from `lucide-react-native` take a `color` prop (hex string), not a CSS class. The `iconColor` field replaces the PWA's `color` (Tailwind text class).
+Icons from `lucide-react-native` take a `color` prop (hex string), not a CSS class. Hex values live only in `tailwind.config.js` as custom tokens. The `iconColorToken` field stores the token name; components resolve it at render time via `useColor(token)` from `@/lib/useColor`.
 
 ```ts
 import {
@@ -537,50 +539,50 @@ import type { LucideIcon } from "lucide-react-native";
 
 export type CategoryMeta = {
   icon: LucideIcon;
-  bg: string;       // NativeWind className for the icon container background
-  iconColor: string; // hex colour passed to the icon's color prop
+  bg: string;            // NativeWind className for the icon container background
+  iconColorToken: ColorToken; // design token name resolved via useColor()
 };
 
 export const CATEGORY_META: Record<string, CategoryMeta> = {
   "Anesthetics & Pharmaceuticals": {
     icon: Pill,
     bg: "bg-violet-100",
-    iconColor: "#7c3aed",
+    iconColorToken: "category-supplies",
   },
   "Disposables & Office": {
     icon: FileText,
     bg: "bg-slate-100",
-    iconColor: "#64748b",
+    iconColorToken: "category-equipment",
   },
   Endodontic: {
     icon: Stethoscope,
     bg: "bg-blue-100",
-    iconColor: "#2563eb",
+    iconColorToken: "category-pharma",
   },
   "Hygiene & Preventives": {
     icon: Droplets,
     bg: "bg-cyan-100",
-    iconColor: "#0891b2",
+    iconColorToken: "category-hygiene",
   },
   "Lab & Prosthodontic": {
     icon: FlaskConical,
     bg: "bg-amber-100",
-    iconColor: "#d97706",
+    iconColorToken: "category-lab",
   },
   "PPE & Infection Control": {
     icon: ShieldCheck,
     bg: "bg-emerald-100",
-    iconColor: "#059669",
+    iconColorToken: "category-ppe",
   },
   "Restorative & Cosmetic": {
     icon: Sparkles,
     bg: "bg-rose-100",
-    iconColor: "#f43f5e",
+    iconColorToken: "category-restorative",
   },
   "Surgical & Implant": {
     icon: Scissors,
     bg: "bg-orange-100",
-    iconColor: "#ea580c",
+    iconColorToken: "category-surgical",
   },
 };
 ```
@@ -1229,7 +1231,9 @@ git commit -m "feat: add root layout with Supabase auth guard"
 - Create: `components/auth/LoginForm.tsx`
 - Create: `app/auth/login.tsx`
 
-- [ ] **Step 1: Create `components/auth/LoginForm.tsx`**
+- [x] **Step 1: Create `components/auth/LoginForm.tsx`** (updated)
+
+Design tokens are resolved via `useColor()` for icon `color` props, `placeholderTextColor`, and `ActivityIndicator` color.
 
 ```tsx
 import { useState } from "react";
@@ -1247,6 +1251,7 @@ import { useRouter } from "expo-router";
 import { Stethoscope } from "lucide-react-native";
 import { signInWithEmail } from "@/lib/services/auth";
 import { FlashMessage } from "@/components/ui/FlashMessage";
+import { useColor } from "@/lib/useColor";
 
 export function LoginForm() {
   const [email, setEmail] = useState("");
@@ -1281,7 +1286,7 @@ export function LoginForm() {
           {/* Brand */}
           <View className="flex-row items-center gap-3 mb-10">
             <View className="w-10 h-10 rounded-xl bg-primary items-center justify-center">
-              <Stethoscope size={20} color="#ffffff" />
+              <Stethoscope size={20} color={useColor("primary-foreground")} />
             </View>
             <View>
               <Text className="text-base font-bold text-card-foreground leading-tight">
@@ -1309,7 +1314,7 @@ export function LoginForm() {
           <TextInput
             className="border border-border rounded-lg px-3 py-3 text-sm text-foreground bg-background mb-4"
             placeholder="you@example.com"
-            placeholderTextColor="#94a3b8"
+            placeholderTextColor={useColor("placeholder")}
             autoCapitalize="none"
             autoComplete="email"
             keyboardType="email-address"
@@ -1325,7 +1330,7 @@ export function LoginForm() {
           <TextInput
             className="border border-border rounded-lg px-3 py-3 text-sm text-foreground bg-background mb-6"
             placeholder="••••••••"
-            placeholderTextColor="#94a3b8"
+            placeholderTextColor={useColor("placeholder")}
             autoComplete="current-password"
             secureTextEntry
             value={password}
@@ -1340,7 +1345,7 @@ export function LoginForm() {
             activeOpacity={0.8}
           >
             {loading ? (
-              <ActivityIndicator color="#ffffff" size="small" />
+              <ActivityIndicator color={useColor("primary-foreground")} size="small" />
             ) : (
               <Text className="text-primary-foreground font-semibold text-sm">
                 Sign in
@@ -1631,11 +1636,14 @@ git commit -m "feat: add responsive app layout with bottom tabs and iPad sidebar
 - Create: `components/dashboard/StatCard.tsx`
 - Create: `app/(app)/dashboard.tsx`
 
-- [ ] **Step 1: Create `components/dashboard/StatCard.tsx`**
+- [x] **Step 1: Create `components/dashboard/StatCard.tsx`** (updated)
+
+Design tokens are resolved via `useColor()` for icon color props. Default icon color falls back to the `primary-foreground` token.
 
 ```tsx
 import { View, Text } from "react-native";
 import type { LucideIcon } from "lucide-react-native";
+import { useColor } from "@/lib/useColor";
 
 interface StatCardProps {
   label: string;
@@ -1649,13 +1657,14 @@ export function StatCard({
   label,
   value,
   icon: Icon,
-  iconColor = "#ffffff",
+  iconColor,
   bgClassName = "bg-primary",
 }: StatCardProps) {
+  const resolvedIconColor = iconColor ?? useColor("primary-foreground");
   return (
     <View className="bg-card p-6 rounded-xl border border-border min-w-36 flex-1">
       <View className={`w-9 h-9 rounded-lg items-center justify-center mb-4 ${bgClassName}`}>
-        <Icon size={20} color={iconColor} />
+        <Icon size={20} color={resolvedIconColor} />
       </View>
       <Text className="text-muted-foreground text-xs font-semibold uppercase tracking-wider mb-1">
         {label}
@@ -1668,14 +1677,17 @@ export function StatCard({
 }
 ```
 
-- [ ] **Step 2: Create `app/(app)/dashboard.tsx`**
+- [x] **Step 2: Create `app/(app)/dashboard.tsx`** (updated)
 
 ```tsx
 import { ScrollView, View, Text } from "react-native";
 import { Package, Activity, TrendingUp, AlertCircle } from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StatCard } from "@/components/dashboard/StatCard";
+import { useColor } from "@/lib/useColor";
 
 export default function DashboardScreen() {
+  const insets = useSafeAreaInsets();
   return (
     <ScrollView className="flex-1 bg-background" contentContainerClassName="p-6">
       {/* Header */}
@@ -1700,34 +1712,34 @@ export default function DashboardScreen() {
           value="—"
           icon={Package}
           bgClassName="bg-primary"
-          iconColor="#ffffff"
+          iconColor={useColor("primary-foreground")}
         />
         <StatCard
           label="In Stock"
           value="—"
           icon={Activity}
           bgClassName="bg-emerald-500"
-          iconColor="#ffffff"
+          iconColor={useColor("primary-foreground")}
         />
         <StatCard
           label="Low Stock"
           value="—"
           icon={AlertCircle}
           bgClassName="bg-destructive"
-          iconColor="#ffffff"
+          iconColor={useColor("primary-foreground")}
         />
         <StatCard
           label="Expiring Soon"
           value="—"
           icon={TrendingUp}
           bgClassName="bg-amber-500"
-          iconColor="#ffffff"
+          iconColor={useColor("primary-foreground")}
         />
       </ScrollView>
 
       {/* Placeholder */}
       <View className="bg-card rounded-xl border border-border p-12 items-center">
-        <Package size={36} color="#94a3b8" />
+        <Package size={36} color={useColor("placeholder")} />
         <Text className="text-sm font-bold text-muted-foreground mt-3">
           Stock table — connecting to real data next
         </Text>
@@ -1796,93 +1808,16 @@ const SORT_COLUMNS: { key: SortBy; label: string }[] = [
 
 const COLORS = { primary: "#4f46e5", muted: "#64748b", destructive: "#ef4444" };
 
-function CategoryIcon({ category }: { category: string }) {
-  const meta = CATEGORY_META[category];
-  if (!meta) return <View className="w-9 h-9 rounded-xl bg-muted" />;
-  const Icon = meta.icon;
-  return (
-    <View className={`w-9 h-9 rounded-xl items-center justify-center ${meta.bg}`}>
-      <Icon size={18} color={meta.iconColor} />
-    </View>
-  );
-}
+// NOTE: In the final implementation, hardcoded COLORS were replaced with useColor() hooks.
+// See the SortIndicator example below for the token-based pattern.
 
-function SkeletonRow() {
-  return (
-    <View className="flex-row items-center px-4 py-3 border-b border-border gap-3">
-      <Skeleton className="w-9 h-9 rounded-xl" />
-      <View className="flex-1 gap-1.5">
-        <Skeleton className="h-4 w-40" />
-        <Skeleton className="h-3 w-24" />
-      </View>
-      <Skeleton className="h-4 w-10" />
-    </View>
-  );
-}
-
-export default function InventoryScreen() {
-  const router = useRouter();
-  const [items, setItems] = useState<InventoryItem[]>([]);
-  const [meta, setMeta] = useState<ListItemsMeta | null>(null);
-  const [page, setPage] = useState(1);
-  const [searchInput, setSearchInput] = useState("");
-  const [query, setQuery] = useState("");
-  const [category, setCategory] = useState("");
-  const [sortBy, setSortBy] = useState<SortBy>("name");
-  const [sortDir, setSortDir] = useState<SortDir>("asc");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const load = useCallback(
-    async (p: number, q: string, cat: string, sb: SortBy, sd: SortDir) => {
-      setLoading(true);
-      setError(null);
-      try {
-        const result = await listItems({
-          page: p,
-          limit: PAGE_SIZE,
-          search: q || undefined,
-          category: cat || undefined,
-          sort_by: sb,
-          sort_dir: sd,
-        });
-        setItems(result.data);
-        setMeta(result.meta);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Failed to load inventory");
-      } finally {
-        setLoading(false);
-      }
-    },
-    []
-  );
-
-  useEffect(() => {
-    load(page, query, category, sortBy, sortDir);
-  }, [page, query, category, sortBy, sortDir, load]);
-
-  function handleSearch() {
-    setPage(1);
-    setQuery(searchInput);
-  }
-
-  function handleSort(col: SortBy) {
-    if (col === sortBy) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    } else {
-      setSortBy(col);
-      setSortDir("asc");
-    }
-    setPage(1);
-  }
-
-  function SortIndicator({ col }: { col: SortBy }) {
+function SortIndicator({ col }: { col: SortBy }) {
     if (col !== sortBy)
-      return <ChevronUp size={10} color="#cbd5e1" style={{ marginLeft: 2 }} />;
+      return <ChevronUp size={10} color={useColor("inactive")} className="ml-0.5" />;
     return sortDir === "asc" ? (
-      <ChevronUp size={10} color={COLORS.primary} style={{ marginLeft: 2 }} />
+      <ChevronUp size={10} color={useColor("primary")} className="ml-0.5" />
     ) : (
-      <ChevronDown size={10} color={COLORS.primary} style={{ marginLeft: 2 }} />
+      <ChevronDown size={10} color={useColor("primary")} className="ml-0.5" />
     );
   }
 
@@ -1904,7 +1839,7 @@ export default function InventoryScreen() {
             <TextInput
               className="flex-1 ml-2 text-sm text-foreground py-3"
               placeholder="Search items…"
-              placeholderTextColor="#94a3b8"
+              placeholderTextColor={useColor("placeholder")}
               value={searchInput}
               onChangeText={setSearchInput}
               onSubmitEditing={handleSearch}
@@ -2329,7 +2264,7 @@ export default function InventoryDetailScreen() {
                   )}
                   {data.item.requires_refrigeration && (
                     <View className="flex-row items-center gap-1 bg-blue-100 px-2 py-0.5 rounded-full">
-                      <Thermometer size={11} color="#2563eb" />
+                      <Thermometer size={11} color={useColor("category-pharma")} />
                       <Text className="text-[10px] font-medium text-blue-700">
                         Cold chain
                       </Text>

@@ -5,7 +5,8 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
 } from "react-native-reanimated";
-import { SHEET_TOP, PRIMARY_LIGHT, HAIRLINE_WIDTH } from "./constants";
+import { useColor } from "@/lib/useColor";
+import { SHEET_TOP, HAIRLINE_WIDTH } from "./constants";
 import type { ScanStatus } from "./types";
 
 type Props = {
@@ -36,7 +37,7 @@ export function ScannerStatusPill({ scanStatus }: Props) {
         >
           <ActivityIndicator
             size="small"
-            color={PRIMARY_LIGHT}
+            color={useColor("primary-light")}
             style={{ transform: [{ scale: 0.75 }] }}
           />
           <Text className="text-xs font-semibold text-primary-lighter">Scanning…</Text>

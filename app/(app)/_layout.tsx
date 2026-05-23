@@ -4,8 +4,7 @@ import { Redirect } from "expo-router";
 import { NativeTabs } from "expo-router/unstable-native-tabs";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase/client";
-
-const PRIMARY = "#4f46e5";
+import { useColor } from "@/lib/useColor";
 
 export default function AppLayout() {
   const [session, setSession] = useState<Session | null | undefined>(undefined);
@@ -23,7 +22,7 @@ export default function AppLayout() {
   }, []);
 
   if (session === undefined) {
-    return <View style={{ flex: 1, backgroundColor: "#f8fafc" }} />;
+    return <View className="flex-1 bg-background" />;
   }
 
   if (!session) {
@@ -31,7 +30,7 @@ export default function AppLayout() {
   }
 
   return (
-    <NativeTabs tintColor={PRIMARY}>
+    <NativeTabs tintColor={useColor("primary")}>
       <NativeTabs.Trigger
         name="dashboard"
         options={{ title: "Dashboard", icon: { sf: "house" } }}

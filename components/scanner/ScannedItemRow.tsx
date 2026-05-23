@@ -1,6 +1,6 @@
 import { View, Text, TouchableOpacity } from "react-native";
 import { Plus, Minus, Package } from "lucide-react-native";
-import { PRIMARY } from "./constants";
+import { useColor } from "@/lib/useColor";
 import type { ScannedItem } from "./types";
 
 type Props = {
@@ -16,7 +16,7 @@ export function ScannedItemRow({ item, isJustAdded, onIncrement, onDecrement }: 
       className={`flex-row items-center px-4 py-3 border-b border-border${isJustAdded ? " bg-success-muted/20 border-l-2 border-l-success" : ""}`}
     >
       <View className="w-9 h-9 rounded-xl bg-primary/10 items-center justify-center">
-        <Package size={18} color={PRIMARY} />
+        <Package size={18} color={useColor("primary")} />
       </View>
       <View className="flex-1 ml-3">
         <Text className="text-sm font-medium text-card-foreground" numberOfLines={1}>
@@ -32,7 +32,7 @@ export function ScannedItemRow({ item, isJustAdded, onIncrement, onDecrement }: 
           onPress={onDecrement}
           activeOpacity={0.7}
         >
-          <Minus size={13} color="#64748b" />
+          <Minus size={13} color={useColor("muted-foreground")} />
         </TouchableOpacity>
         <Text className="text-sm font-semibold text-card-foreground w-5 text-center">
           {item.quantity}
@@ -42,7 +42,7 @@ export function ScannedItemRow({ item, isJustAdded, onIncrement, onDecrement }: 
           onPress={onIncrement}
           activeOpacity={0.7}
         >
-          <Plus size={13} color="white" />
+          <Plus size={13} color={useColor("primary-foreground")} />
         </TouchableOpacity>
       </View>
     </View>
