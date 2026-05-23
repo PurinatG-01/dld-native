@@ -1,73 +1,36 @@
 import { useEffect, useReducer, useCallback, useState } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-  Dimensions,
-  ActivityIndicator,
-} from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { X, Plus, Minus, Package } from "lucide-react-native";
+import { X } from "lucide-react-native";
 import { markModalClosed } from "@/lib/scanner-state";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withSpring,
-  withTiming,
   withRepeat,
+  withTiming,
   Easing,
   interpolate,
 } from "react-native-reanimated";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { lookupItemByBarcode } from "@/lib/services/inventory";
-import { Skeleton } from "@/components/ui/Skeleton";
+import { ScannerSheet } from "@/components/scanner/ScannerSheet";
+import { ScannerStatusPill } from "@/components/scanner/ScannerStatusPill";
+import {
+  FINDER_SIZE,
+  CORNER_SIZE,
+  CORNER_THICKNESS,
+  SHEET_TOP,
+  SNAP_COLLAPSED,
+} from "@/components/scanner/constants";
+import type { ScanState, ScanAction, ScannedItem } from "@/components/scanner/types";
 
-const { height: SCREEN_HEIGHT } = Dimensions.get("window");
-const SHEET_TOP = SCREEN_HEIGHT * 0.5;
-const SNAP_COLLAPSED = SHEET_TOP;
-const SNAP_EXPANDED = 0;
-
-const FINDER_SIZE = 200;
-const CORNER_SIZE = 22;
-const CORNER_THICKNESS = 3;
-const PRIMARY = "#4f46e5";
-
-const FINDER_COLOR: Record<ScanStatus, string> = {
+const FINDER_COLOR: Record<ScanState["status"], string> = {
   idle: "rgba(255,255,255,0.85)",
   loading: "#818cf8",
   success: "rgba(255,255,255,0.85)",
   error: "#f87171",
 };
-
-// --- Types ---
-
-type ScanStatus = "idle" | "loading" | "success" | "error";
-
-type ScannedItem = {
-  id: string;
-  barcode: string;
-  name: string;
-  quantity: number;
-  scannedAt: Date;
-};
-
-type ScanState =
-  | { status: "idle" }
-  | { status: "loading"; barcode: string }
-  | { status: "success"; barcode: string }
-  | { status: "error"; barcode: string };
-
-type ScanAction =
-  | { type: "SCAN_START"; barcode: string }
-  | { type: "SCAN_SUCCESS"; barcode: string }
-  | { type: "SCAN_ERROR"; barcode: string }
-  | { type: "SCAN_RESET" };
-
-// --- Reducer ---
 
 function scanReducer(state: ScanState, action: ScanAction): ScanState {
   switch (action.type) {
@@ -87,8 +50,6 @@ function scanReducer(state: ScanState, action: ScanAction): ScanState {
   }
 }
 
-// --- Component ---
-
 export default function ScannerModal() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -97,54 +58,13 @@ export default function ScannerModal() {
   const [scanState, dispatch] = useReducer(scanReducer, { status: "idle" });
 
   const translateY = useSharedValue(SNAP_COLLAPSED);
-  const startY = useSharedValue(0);
-  const pillOpacity = useSharedValue(0);
   const sweepProgress = useSharedValue(0);
-
-  const panGesture = Gesture.Pan()
-    .onStart(() => {
-      startY.value = translateY.value;
-    })
-    .onUpdate((e) => {
-      translateY.value = Math.max(
-        SNAP_EXPANDED,
-        Math.min(SNAP_COLLAPSED, startY.value + e.translationY)
-      );
-    })
-    .onEnd((e) => {
-      const shouldExpand =
-        e.velocityY < -500 || translateY.value < SNAP_COLLAPSED / 2;
-      translateY.value = withSpring(
-        shouldExpand ? SNAP_EXPANDED : SNAP_COLLAPSED,
-        { velocity: e.velocityY, damping: 20, stiffness: 200, overshootClamping: true }
-      );
-    });
-
-  const sheetAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: translateY.value }],
-  }));
-
-  const innerHeightStyle = useAnimatedStyle(() => ({
-    height: SCREEN_HEIGHT - translateY.value,
-  }));
-
-  const pillAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: pillOpacity.value,
-  }));
 
   const sweepAnimatedStyle = useAnimatedStyle(() => ({
     top: interpolate(sweepProgress.value, [0, 1], [0, FINDER_SIZE]),
     opacity: interpolate(sweepProgress.value, [0, 0.08, 0.92, 1], [0, 1, 1, 0]),
   }));
 
-  // Pill fade in/out
-  useEffect(() => {
-    pillOpacity.value = withTiming(scanState.status !== "idle" ? 1 : 0, {
-      duration: 150,
-    });
-  }, [scanState.status]);
-
-  // Sweep line while loading
   useEffect(() => {
     if (scanState.status === "loading") {
       sweepProgress.value = 0;
@@ -158,7 +78,6 @@ export default function ScannerModal() {
     }
   }, [scanState.status]);
 
-  // Auto-reset after success/error
   useEffect(() => {
     if (scanState.status === "success") {
       const id = setTimeout(() => dispatch({ type: "SCAN_RESET" }), 1000);
@@ -227,8 +146,6 @@ export default function ScannerModal() {
     );
   };
 
-  const finderColor = FINDER_COLOR[scanState.status];
-
   if (!permission || !permission.granted) {
     return (
       <View className="flex-1 bg-black items-center justify-center px-6">
@@ -247,9 +164,10 @@ export default function ScannerModal() {
     );
   }
 
+  const finderColor = FINDER_COLOR[scanState.status];
+
   return (
     <View className="flex-1 bg-black">
-      {/* Camera — full screen */}
       <CameraView
         style={StyleSheet.absoluteFill}
         facing="back"
@@ -277,14 +195,12 @@ export default function ScannerModal() {
         </View>
       </View>
 
-      {/* Hint text */}
       <Text style={styles.hintText}>
         {scanState.status === "loading"
           ? "Looking up item…"
           : "Align barcode within the frame"}
       </Text>
 
-      {/* Close button */}
       <TouchableOpacity
         style={[styles.closeButton, { top: insets.top + 12 }]}
         onPress={handleClose}
@@ -293,120 +209,15 @@ export default function ScannerModal() {
         <X size={20} color="white" />
       </TouchableOpacity>
 
-      {/* Status pill */}
-      <Animated.View style={[styles.pillWrapper, pillAnimatedStyle]} pointerEvents="none">
-        {scanState.status === "loading" && (
-          <View className="flex-row items-center gap-1.5 rounded-full px-3.5 py-1.5" style={styles.pillScanning}>
-            <ActivityIndicator size="small" color="#818cf8" style={{ transform: [{ scale: 0.75 }] }} />
-            <Text className="text-xs font-semibold" style={{ color: "#a5b4fc" }}>Scanning…</Text>
-          </View>
-        )}
-        {scanState.status === "success" && (
-          <View className="flex-row items-center rounded-full px-3.5 py-1.5" style={styles.pillAdded}>
-            <Text className="text-xs font-semibold" style={{ color: "#4ade80" }}>✓ Added</Text>
-          </View>
-        )}
-        {scanState.status === "error" && (
-          <View className="flex-row items-center rounded-full px-3.5 py-1.5" style={styles.pillNotFound}>
-            <Text className="text-xs font-semibold" style={{ color: "#f87171" }}>✕ Not found</Text>
-          </View>
-        )}
-      </Animated.View>
+      <ScannerStatusPill scanStatus={scanState.status} />
 
-      {/* Summary sheet */}
-      <Animated.View className="bg-card" style={[styles.sheet, sheetAnimatedStyle]}>
-        <Animated.View
-          className="rounded-t-2xl overflow-hidden bg-card"
-          style={innerHeightStyle}
-        >
-          <GestureDetector gesture={panGesture}>
-            <View className="items-center pt-3 pb-1">
-              <View className="w-9 h-1 rounded-full bg-border" />
-              <View className="flex-row items-center gap-1.5 self-start px-4 pt-3 pb-1">
-                <Text className="text-sm font-semibold text-card-foreground">
-                  Scanned Items
-                </Text>
-                {scannedItems.length > 0 && (
-                  <Text className="text-sm text-muted-foreground">
-                    ({scannedItems.length})
-                  </Text>
-                )}
-              </View>
-            </View>
-          </GestureDetector>
-
-          <ScrollView
-            className="flex-1"
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}
-          >
-            {/* Skeleton row while loading */}
-            {scanState.status === "loading" && (
-              <View className="flex-row items-center px-4 py-3 border-b border-border gap-3">
-                <Skeleton className="w-9 h-9 rounded-xl" />
-                <View className="flex-1 gap-1.5">
-                  <Skeleton className="h-3 w-2/3" />
-                  <Skeleton className="h-2.5 w-1/3" />
-                </View>
-                <Skeleton className="w-14 h-7 rounded-full" />
-              </View>
-            )}
-
-            {scannedItems.length === 0 && scanState.status !== "loading" ? (
-              <Text className="text-sm text-muted-foreground text-center mt-6">
-                No items scanned yet
-              </Text>
-            ) : (
-              scannedItems.map((item) => {
-                const isJustAdded =
-                  scanState.status === "success" &&
-                  item.barcode === scanState.barcode;
-                return (
-                  <View
-                    key={item.id}
-                    className="flex-row items-center px-4 py-3 border-b border-border"
-                    style={isJustAdded ? styles.rowSuccess : undefined}
-                  >
-                    <View className="w-9 h-9 rounded-xl bg-primary/10 items-center justify-center">
-                      <Package size={18} color={PRIMARY} />
-                    </View>
-                    <View className="flex-1 ml-3">
-                      <Text
-                        className="text-sm font-medium text-card-foreground"
-                        numberOfLines={1}
-                      >
-                        {item.name}
-                      </Text>
-                      <Text className="text-xs text-muted-foreground mt-0.5 font-mono">
-                        {item.barcode}
-                      </Text>
-                    </View>
-                    <View className="flex-row items-center gap-2 ml-3">
-                      <TouchableOpacity
-                        className="w-7 h-7 rounded-full bg-muted items-center justify-center"
-                        onPress={() => adjustQuantity(item.id, -1)}
-                        activeOpacity={0.7}
-                      >
-                        <Minus size={13} color="#64748b" />
-                      </TouchableOpacity>
-                      <Text className="text-sm font-semibold text-card-foreground w-5 text-center">
-                        {item.quantity}
-                      </Text>
-                      <TouchableOpacity
-                        className="w-7 h-7 rounded-full bg-primary items-center justify-center"
-                        onPress={() => adjustQuantity(item.id, 1)}
-                        activeOpacity={0.7}
-                      >
-                        <Plus size={13} color="white" />
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                );
-              })
-            )}
-          </ScrollView>
-        </Animated.View>
-      </Animated.View>
+      <ScannerSheet
+        translateY={translateY}
+        items={scannedItems}
+        scanState={scanState}
+        onAdjustQuantity={adjustQuantity}
+        bottomInset={insets.bottom}
+      />
     </View>
   );
 }
@@ -472,35 +283,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: "center",
   },
-  pillWrapper: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    top: SHEET_TOP - 52,
-    alignItems: "center",
-  },
-  pillScanning: {
-    backgroundColor: "rgba(0,0,0,0.65)",
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(79,70,229,0.6)",
-  },
-  pillAdded: {
-    backgroundColor: "rgba(5,46,22,0.92)",
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "#16a34a",
-  },
-  pillNotFound: {
-    backgroundColor: "rgba(45,10,10,0.92)",
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "#dc2626",
-  },
-  sheet: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: -SCREEN_HEIGHT,
-  },
   closeButton: {
     position: "absolute",
     right: 20,
@@ -510,10 +292,5 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.5)",
     alignItems: "center",
     justifyContent: "center",
-  },
-  rowSuccess: {
-    backgroundColor: "rgba(5,46,22,0.2)",
-    borderLeftWidth: 2,
-    borderLeftColor: "#16a34a",
   },
 });

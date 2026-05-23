@@ -93,6 +93,13 @@ components/
   ui/                  # Shared primitives (Skeleton, FlashMessage)
   auth/
   dashboard/
+  scanner/             # Scanner-specific components
+    types.ts           # ScanState, ScanAction, ScannedItem, ScanStatus
+    constants.ts       # SCREEN_HEIGHT, SHEET_TOP, FINDER_SIZE, PRIMARY, etc.
+    ScannedItemRow.tsx # Single scanned item row with quantity stepper
+    ScannedItemList.tsx# ScrollView list: skeleton / empty state / rows
+    ScannerStatusPill.tsx # Animated floating pill (Scanning… / ✓ Added / ✕ Not found)
+    ScannerSheet.tsx   # Swipeable bottom sheet with gesture + header + list
 
 lib/
   services/            # API service functions (Supabase edge functions)
@@ -107,6 +114,29 @@ All backend calls live in `lib/services/`. Each function fetches the Supabase se
 ### Navigation
 
 Uses expo-router file-based routing. Modal screens are registered as root-level routes and pushed with `router.push("/screen-name")`. Tab screens live under `app/(app)/`.
+
+### Component extraction pattern
+
+Feature-specific components live under `components/<feature>/`. Each directory contains:
+- `types.ts` — all TypeScript types and discriminated unions for that feature
+- `constants.ts` — computed constants (e.g. Dimensions-based values, color maps)
+- One file per component, named in PascalCase
+
+**Props over shared state.** Pass data and callbacks down as props. Components do not import from `app/` or reach into sibling feature directories.
+
+**Self-contained animations.** If a component owns an animation (e.g. fade in/out), it declares its own `useSharedValue` and `useEffect` internally. Only pass a `SharedValue` as a prop when the parent genuinely needs to drive the animation from outside (e.g. a sheet whose position is controlled by a parent gesture).
+
+```tsx
+// Good — pill owns its opacity animation
+export function ScannerStatusPill({ scanStatus }: { scanStatus: ScanStatus }) {
+  const opacity = useSharedValue(0);
+  useEffect(() => { opacity.value = withTiming(...); }, [scanStatus]);
+  ...
+}
+
+// Good — sheet receives translateY from parent that coordinates multiple views
+export function ScannerSheet({ translateY }: { translateY: SharedValue<number> }) { ... }
+```
 
 ### Reanimated
 
