@@ -1,59 +1,48 @@
-jest.mock("expo-camera", () => ({
-  requestCameraPermissionsAsync: jest.fn(),
-  getCameraPermissionsAsync: jest.fn(),
-}));
-
-import {
-  requestCameraPermissionsAsync,
-  getCameraPermissionsAsync,
-} from "expo-camera";
+import { Camera } from "expo-camera";
 import {
   requestCameraPermission,
   getCameraPermissionStatus,
 } from "@/lib/services/camera";
 
-const mockRequest = requestCameraPermissionsAsync as jest.Mock;
-const mockGet = getCameraPermissionsAsync as jest.Mock;
-
 describe("requestCameraPermission", () => {
-  afterEach(() => jest.clearAllMocks());
+  afterEach(() => jest.restoreAllMocks());
 
   it("returns granted when permission is granted", async () => {
-    mockRequest.mockResolvedValue({ status: "granted" });
+    jest.spyOn(Camera, "requestCameraPermissionsAsync").mockResolvedValue({ status: "granted" } as any);
     const result = await requestCameraPermission();
     expect(result).toBe("granted");
   });
 
   it("returns denied when permission is denied", async () => {
-    mockRequest.mockResolvedValue({ status: "denied" });
+    jest.spyOn(Camera, "requestCameraPermissionsAsync").mockResolvedValue({ status: "denied" } as any);
     const result = await requestCameraPermission();
     expect(result).toBe("denied");
   });
 
   it("returns undetermined when permission is undetermined", async () => {
-    mockRequest.mockResolvedValue({ status: "undetermined" });
+    jest.spyOn(Camera, "requestCameraPermissionsAsync").mockResolvedValue({ status: "undetermined" } as any);
     const result = await requestCameraPermission();
     expect(result).toBe("undetermined");
   });
 });
 
 describe("getCameraPermissionStatus", () => {
-  afterEach(() => jest.clearAllMocks());
+  afterEach(() => jest.restoreAllMocks());
 
   it("returns current granted status", async () => {
-    mockGet.mockResolvedValue({ status: "granted" });
+    jest.spyOn(Camera, "getCameraPermissionsAsync").mockResolvedValue({ status: "granted" } as any);
     const result = await getCameraPermissionStatus();
     expect(result).toBe("granted");
   });
 
   it("returns denied when permission is denied", async () => {
-    mockGet.mockResolvedValue({ status: "denied" });
+    jest.spyOn(Camera, "getCameraPermissionsAsync").mockResolvedValue({ status: "denied" } as any);
     const result = await getCameraPermissionStatus();
     expect(result).toBe("denied");
   });
 
   it("returns undetermined when not yet requested", async () => {
-    mockGet.mockResolvedValue({ status: "undetermined" });
+    jest.spyOn(Camera, "getCameraPermissionsAsync").mockResolvedValue({ status: "undetermined" } as any);
     const result = await getCameraPermissionStatus();
     expect(result).toBe("undetermined");
   });
