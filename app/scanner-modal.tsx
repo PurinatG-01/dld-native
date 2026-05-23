@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useCallback, useState } from "react";
+import { useEffect, useReducer, useCallback, useState, useRef } from "react";
 import { View, Text, Pressable } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useRouter } from "expo-router";
@@ -26,6 +26,14 @@ import {
 import { useColor } from "@/lib/useColor";
 import type { ScanState, ScanAction, ScannedItem, ScanStatus } from "@/components/scanner/types";
 
+const MOCK_SCAN_ITEMS = [
+  { barcode: "MOCK-001", name: "Amoxicillin 500mg" },
+  { barcode: "MOCK-002", name: "Nitrile Gloves (Box)" },
+  { barcode: "MOCK-003", name: "Dental Mirror #5" },
+  { barcode: "MOCK-004", name: "Composite Resin A2" },
+  { barcode: "MOCK-005", name: "Surgical Mask (50-pack)" },
+] as const;
+
 function scanReducer(state: ScanState, action: ScanAction): ScanState {
   switch (action.type) {
     case "SCAN_START":
@@ -50,6 +58,7 @@ export default function ScannerModal() {
   const [permission, requestPermission] = useCameraPermissions();
   const [scannedItems, setScannedItems] = useState<ScannedItem[]>([]);
   const [scanState, dispatch] = useReducer(scanReducer, { status: "idle" });
+  const mockIndexRef = useRef(0);
 
   const finderColorMap: Record<ScanStatus, string> = {
     idle: "rgba(255,255,255,0.85)",
@@ -129,6 +138,36 @@ export default function ScannerModal() {
     },
     [scanState.status]
   );
+
+  const handleSimulateScan = useCallback(() => {
+    if (scanState.status !== "idle") return;
+    const mock = MOCK_SCAN_ITEMS[mockIndexRef.current % MOCK_SCAN_ITEMS.length];
+    mockIndexRef.current += 1;
+
+    dispatch({ type: "SCAN_START", barcode: mock.barcode });
+
+    setTimeout(() => {
+      setScannedItems((prev) => {
+        const existing = prev.find((i) => i.barcode === mock.barcode);
+        if (existing) {
+          return prev.map((i) =>
+            i.barcode === mock.barcode ? { ...i, quantity: i.quantity + 1 } : i
+          );
+        }
+        return [
+          {
+            id: `${Date.now()}-${Math.random()}`,
+            barcode: mock.barcode,
+            name: mock.name,
+            quantity: 1,
+            scannedAt: new Date(),
+          },
+          ...prev,
+        ];
+      });
+      dispatch({ type: "SCAN_SUCCESS", barcode: mock.barcode });
+    }, 600);
+  }, [scanState.status]);
 
   const handleClose = useCallback(() => {
     markModalClosed();
@@ -220,6 +259,17 @@ export default function ScannerModal() {
           ? "Looking up item…"
           : "Align barcode within the frame"}
       </Text>
+
+      {__DEV__ && (
+        <Pressable
+          onPress={handleSimulateScan}
+          disabled={scanState.status !== "idle"}
+          className="absolute self-center px-4 py-1.5 rounded-full bg-black/50 border border-white/20 active:opacity-70 disabled:opacity-40"
+          style={{ top: (SHEET_TOP + FINDER_SIZE) / 2 + 36 }}
+        >
+          <Text className="text-xs font-semibold text-white/80">Simulate scan</Text>
+        </Pressable>
+      )}
 
       <Pressable
         className="absolute right-5 w-10 h-10 rounded-full bg-black/50 items-center justify-center active:opacity-70"
