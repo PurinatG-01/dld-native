@@ -130,12 +130,12 @@ export default function ScannerModal() {
     [scanState.status]
   );
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     markModalClosed();
     router.dismissTo("/(app)/dashboard");
-  };
+  }, [router]);
 
-  const adjustQuantity = (id: string, delta: number) => {
+  const adjustQuantity = useCallback((id: string, delta: number) => {
     setScannedItems((prev) =>
       prev
         .map((item) =>
@@ -145,7 +145,7 @@ export default function ScannerModal() {
         )
         .filter((item) => item.quantity > 0)
     );
-  };
+  }, []);
 
   if (!permission || !permission.granted) {
     return (
