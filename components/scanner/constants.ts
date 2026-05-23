@@ -1,4 +1,4 @@
-import { Dimensions } from "react-native";
+import { Dimensions, PixelRatio } from "react-native";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -10,3 +10,6 @@ export const FINDER_SIZE = 200;
 export const CORNER_SIZE = 22;
 export const CORNER_THICKNESS = 3;
 export const PRIMARY = "#4f46e5";
+export const PRIMARY_LIGHT = "#818cf8";
+export const ERROR_FOREGROUND = "#f87171";
+export const HAIRLINE_WIDTH = 1 / PixelRatio.get();

@@ -63,6 +63,8 @@ These custom tokens are defined in `tailwind.config.js` — use them instead of 
 |---|---|---|
 | `primary` | `#4f46e5` | Buttons, active states, icons |
 | `primary-foreground` | `#ffffff` | Text on primary bg |
+| `primary-light` | `#818cf8` | Loading / in-progress indicators |
+| `primary-lighter` | `#a5b4fc` | Text on loading pill bg |
 | `background` | `#f8fafc` | App background |
 | `card` | `#ffffff` | Sheet / card surfaces |
 | `card-foreground` | `#0f172a` | Primary text on cards |
@@ -71,6 +73,11 @@ These custom tokens are defined in `tailwind.config.js` — use them instead of 
 | `muted-foreground` | `#64748b` | Secondary / placeholder text |
 | `destructive` | `#ef4444` | Errors, delete actions |
 | `destructive-foreground` | `#ffffff` | Text on destructive bg |
+| `success` | `#16a34a` | Success borders, icons |
+| `success-foreground` | `#4ade80` | Text on dark success bg |
+| `success-muted` | `#052e16` | Base for success alpha backgrounds — pair with `/20` or `/92` |
+| `error-foreground` | `#f87171` | Text on dark error bg |
+| `error-muted` | `#2d0a0a` | Base for error alpha backgrounds — pair with `/92` |
 
 ---
 

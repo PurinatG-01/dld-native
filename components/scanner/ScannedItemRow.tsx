@@ -13,8 +13,7 @@ type Props = {
 export function ScannedItemRow({ item, isJustAdded, onIncrement, onDecrement }: Props) {
   return (
     <View
-      className="flex-row items-center px-4 py-3 border-b border-border"
-      style={isJustAdded ? { backgroundColor: "rgba(5,46,22,0.2)", borderLeftWidth: 2, borderLeftColor: "#16a34a" } : undefined}
+      className={`flex-row items-center px-4 py-3 border-b border-border${isJustAdded ? " bg-success-muted/20 border-l-2 border-l-success" : ""}`}
     >
       <View className="w-9 h-9 rounded-xl bg-primary/10 items-center justify-center">
         <Package size={18} color={PRIMARY} />
@@ -49,4 +48,3 @@ export function ScannedItemRow({ item, isJustAdded, onIncrement, onDecrement }: 
     </View>
   );
 }
-

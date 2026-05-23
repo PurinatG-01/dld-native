@@ -1,5 +1,5 @@
 import { useEffect, useReducer, useCallback, useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -22,14 +22,16 @@ import {
   CORNER_THICKNESS,
   SHEET_TOP,
   SNAP_COLLAPSED,
+  PRIMARY_LIGHT,
+  ERROR_FOREGROUND,
 } from "@/components/scanner/constants";
 import type { ScanState, ScanAction, ScannedItem } from "@/components/scanner/types";
 
 const FINDER_COLOR: Record<ScanState["status"], string> = {
   idle: "rgba(255,255,255,0.85)",
-  loading: "#818cf8",
+  loading: PRIMARY_LIGHT,
   success: "rgba(255,255,255,0.85)",
-  error: "#f87171",
+  error: ERROR_FOREGROUND,
 };
 
 function scanReducer(state: ScanState, action: ScanAction): ScanState {
@@ -150,7 +152,8 @@ export default function ScannerModal() {
     return (
       <View className="flex-1 bg-black items-center justify-center px-6">
         <TouchableOpacity
-          style={[styles.closeButton, { top: insets.top + 12 }]}
+          className="absolute right-5 w-10 h-10 rounded-full bg-black/50 items-center justify-center"
+          style={{ top: insets.top + 12 }}
           onPress={handleClose}
           activeOpacity={0.7}
         >
@@ -169,40 +172,59 @@ export default function ScannerModal() {
   return (
     <View className="flex-1 bg-black">
       <CameraView
-        style={StyleSheet.absoluteFill}
+        style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
         facing="back"
         onBarcodeScanned={handleBarcodeScanned}
       />
 
       {/* Dim overlay + viewfinder */}
-      <View style={StyleSheet.absoluteFill} pointerEvents="none">
+      <View className="absolute inset-0" pointerEvents="none">
         <View style={{ height: SHEET_TOP }}>
-          <View style={styles.dimStrip} />
-          <View style={styles.finderRow}>
-            <View style={styles.dimStrip} />
-            <View style={styles.finderBox}>
-              <View style={[styles.corner, styles.cornerTL, { borderColor: finderColor }]} />
-              <View style={[styles.corner, styles.cornerTR, { borderColor: finderColor }]} />
-              <View style={[styles.corner, styles.cornerBL, { borderColor: finderColor }]} />
-              <View style={[styles.corner, styles.cornerBR, { borderColor: finderColor }]} />
+          <View className="flex-1 bg-black/60" />
+          <View className="flex-row" style={{ height: FINDER_SIZE }}>
+            <View className="flex-1 bg-black/60" />
+            <View style={{ width: FINDER_SIZE, height: FINDER_SIZE }}>
+              <View
+                className="absolute top-0 left-0"
+                style={{ width: CORNER_SIZE, height: CORNER_SIZE, borderTopWidth: CORNER_THICKNESS, borderLeftWidth: CORNER_THICKNESS, borderColor: finderColor }}
+              />
+              <View
+                className="absolute top-0 right-0"
+                style={{ width: CORNER_SIZE, height: CORNER_SIZE, borderTopWidth: CORNER_THICKNESS, borderRightWidth: CORNER_THICKNESS, borderColor: finderColor }}
+              />
+              <View
+                className="absolute bottom-0 left-0"
+                style={{ width: CORNER_SIZE, height: CORNER_SIZE, borderBottomWidth: CORNER_THICKNESS, borderLeftWidth: CORNER_THICKNESS, borderColor: finderColor }}
+              />
+              <View
+                className="absolute bottom-0 right-0"
+                style={{ width: CORNER_SIZE, height: CORNER_SIZE, borderBottomWidth: CORNER_THICKNESS, borderRightWidth: CORNER_THICKNESS, borderColor: finderColor }}
+              />
               {scanState.status === "loading" && (
-                <Animated.View style={[styles.sweepLine, sweepAnimatedStyle]} />
+                <Animated.View
+                  className="absolute left-1 right-1 bg-primary-light"
+                  style={[{ height: 1.5, shadowColor: PRIMARY_LIGHT, shadowOpacity: 0.8, shadowRadius: 4 }, sweepAnimatedStyle]}
+                />
               )}
             </View>
-            <View style={styles.dimStrip} />
+            <View className="flex-1 bg-black/60" />
           </View>
-          <View style={styles.dimStrip} />
+          <View className="flex-1 bg-black/60" />
         </View>
       </View>
 
-      <Text style={styles.hintText}>
+      <Text
+        className="absolute inset-x-0 text-xs text-center text-white/75"
+        style={{ top: (SHEET_TOP + FINDER_SIZE) / 2 + 12 }}
+      >
         {scanState.status === "loading"
           ? "Looking up item…"
           : "Align barcode within the frame"}
       </Text>
 
       <TouchableOpacity
-        style={[styles.closeButton, { top: insets.top + 12 }]}
+        className="absolute right-5 w-10 h-10 rounded-full bg-black/50 items-center justify-center"
+        style={{ top: insets.top + 12 }}
         onPress={handleClose}
         activeOpacity={0.7}
       >
@@ -221,76 +243,3 @@ export default function ScannerModal() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  dimStrip: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.6)",
-  },
-  finderRow: {
-    flexDirection: "row",
-    height: FINDER_SIZE,
-  },
-  finderBox: {
-    width: FINDER_SIZE,
-    height: FINDER_SIZE,
-  },
-  corner: {
-    position: "absolute",
-    width: CORNER_SIZE,
-    height: CORNER_SIZE,
-  },
-  cornerTL: {
-    top: 0,
-    left: 0,
-    borderTopWidth: CORNER_THICKNESS,
-    borderLeftWidth: CORNER_THICKNESS,
-  },
-  cornerTR: {
-    top: 0,
-    right: 0,
-    borderTopWidth: CORNER_THICKNESS,
-    borderRightWidth: CORNER_THICKNESS,
-  },
-  cornerBL: {
-    bottom: 0,
-    left: 0,
-    borderBottomWidth: CORNER_THICKNESS,
-    borderLeftWidth: CORNER_THICKNESS,
-  },
-  cornerBR: {
-    bottom: 0,
-    right: 0,
-    borderBottomWidth: CORNER_THICKNESS,
-    borderRightWidth: CORNER_THICKNESS,
-  },
-  sweepLine: {
-    position: "absolute",
-    left: 4,
-    right: 4,
-    height: 1.5,
-    backgroundColor: "#818cf8",
-    shadowColor: "#818cf8",
-    shadowOpacity: 0.8,
-    shadowRadius: 4,
-  },
-  hintText: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    top: (SHEET_TOP + FINDER_SIZE) / 2 + 12,
-    color: "rgba(255,255,255,0.75)",
-    fontSize: 12,
-    textAlign: "center",
-  },
-  closeButton: {
-    position: "absolute",
-    right: 20,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});

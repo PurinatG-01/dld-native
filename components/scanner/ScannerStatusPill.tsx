@@ -1,11 +1,11 @@
 import { useEffect } from "react";
-import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
+import { View, Text, ActivityIndicator } from "react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
 } from "react-native-reanimated";
-import { SHEET_TOP } from "./constants";
+import { SHEET_TOP, PRIMARY_LIGHT, HAIRLINE_WIDTH } from "./constants";
 import type { ScanStatus } from "./types";
 
 type Props = {
@@ -31,57 +31,33 @@ export function ScannerStatusPill({ scanStatus }: Props) {
     >
       {scanStatus === "loading" && (
         <View
-          className="flex-row items-center gap-1.5 rounded-full px-3.5 py-1.5"
-          style={styles.pillScanning}
+          className="flex-row items-center gap-1.5 rounded-full px-3.5 py-1.5 bg-black/65 border-primary/60"
+          style={{ borderWidth: HAIRLINE_WIDTH }}
         >
           <ActivityIndicator
             size="small"
-            color="#818cf8"
+            color={PRIMARY_LIGHT}
             style={{ transform: [{ scale: 0.75 }] }}
           />
-          <Text className="text-xs font-semibold" style={{ color: "#a5b4fc" }}>
-            Scanning…
-          </Text>
+          <Text className="text-xs font-semibold text-primary-lighter">Scanning…</Text>
         </View>
       )}
       {scanStatus === "success" && (
         <View
-          className="flex-row items-center rounded-full px-3.5 py-1.5"
-          style={styles.pillAdded}
+          className="flex-row items-center rounded-full px-3.5 py-1.5 bg-success-muted/92 border-success"
+          style={{ borderWidth: HAIRLINE_WIDTH }}
         >
-          <Text className="text-xs font-semibold" style={{ color: "#4ade80" }}>
-            ✓ Added
-          </Text>
+          <Text className="text-xs font-semibold text-success-foreground">✓ Added</Text>
         </View>
       )}
       {scanStatus === "error" && (
         <View
-          className="flex-row items-center rounded-full px-3.5 py-1.5"
-          style={styles.pillNotFound}
+          className="flex-row items-center rounded-full px-3.5 py-1.5 bg-error-muted/92 border-destructive"
+          style={{ borderWidth: HAIRLINE_WIDTH }}
         >
-          <Text className="text-xs font-semibold" style={{ color: "#f87171" }}>
-            ✕ Not found
-          </Text>
+          <Text className="text-xs font-semibold text-error-foreground">✕ Not found</Text>
         </View>
       )}
     </Animated.View>
   );
 }
-
-const styles = StyleSheet.create({
-  pillScanning: {
-    backgroundColor: "rgba(0,0,0,0.65)",
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(79,70,229,0.6)",
-  },
-  pillAdded: {
-    backgroundColor: "rgba(5,46,22,0.92)",
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "#16a34a",
-  },
-  pillNotFound: {
-    backgroundColor: "rgba(45,10,10,0.92)",
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "#dc2626",
-  },
-});
