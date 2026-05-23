@@ -117,6 +117,36 @@ export async function listItems(params: {
   return res.json();
 }
 
+export async function lookupItemByBarcode(
+  barcode: string
+): Promise<InventoryItem | null> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session) throw new Error("Not authenticated");
+
+  const url = new URL(
+    "/functions/v1/list-items",
+    process.env.EXPO_PUBLIC_SUPABASE_URL
+  );
+  url.searchParams.set("barcode", barcode);
+  url.searchParams.set("limit", "1");
+
+  const res = await fetch(url.toString(), {
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!res.ok) return null;
+
+  const result: ListItemsResult = await res
+    .json()
+    .catch(() => ({ data: [], meta: {} }));
+  return result.data[0] ?? null;
+}
+
 export async function getItemStock(
   itemId: string
 ): Promise<GetItemStockResult> {
