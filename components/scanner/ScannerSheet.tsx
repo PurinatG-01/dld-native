@@ -50,18 +50,14 @@ export function ScannerSheet({
     transform: [{ translateY: translateY.value }],
   }));
 
-  const innerHeightStyle = useAnimatedStyle(() => ({
-    height: SCREEN_HEIGHT - translateY.value,
-  }));
-
   const justAddedBarcode =
     scanState.status === "success" ? scanState.barcode : null;
 
   return (
     <Animated.View className="bg-card absolute inset-x-0 top-0" style={[{ bottom: -SCREEN_HEIGHT }, sheetAnimatedStyle]}>
-      <Animated.View
+      <View
         className="rounded-t-2xl overflow-hidden bg-card"
-        style={innerHeightStyle}
+        style={{ height: SCREEN_HEIGHT }}
       >
         <GestureDetector gesture={panGesture}>
           <View className="items-center pt-3 pb-1">
@@ -86,7 +82,7 @@ export function ScannerSheet({
           onAdjustQuantity={onAdjustQuantity}
           bottomInset={bottomInset}
         />
-      </Animated.View>
+      </View>
     </Animated.View>
   );
 }

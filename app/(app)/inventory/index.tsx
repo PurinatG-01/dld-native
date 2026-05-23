@@ -1,9 +1,8 @@
-import { useState, useEffect, useCallback } from "react"
+import { memo, useState, useEffect, useCallback } from "react"
 import {
   View,
   Text,
   TextInput,
-  TouchableOpacity,
   FlatList,
   ScrollView,
   Pressable,
@@ -57,6 +56,80 @@ function SkeletonRow() {
     </View>
   )
 }
+
+function SortIndicator({
+  col,
+  sortBy,
+  sortDir,
+}: {
+  col: SortBy
+  sortBy: SortBy
+  sortDir: SortDir
+}) {
+  if (col !== sortBy)
+    return <ChevronUp size={10} color={useColor("inactive")} className="ml-0.5" />
+  return sortDir === "asc" ? (
+    <ChevronUp size={10} color={useColor("primary")} className="ml-0.5" />
+  ) : (
+    <ChevronDown size={10} color={useColor("primary")} className="ml-0.5" />
+  )
+}
+
+type InventoryRowProps = {
+  id: string
+  name: string
+  category: string
+  unit_of_measure: string
+  total_quantity: number
+  reorder_point: number | null
+  onPress: (id: string) => void
+}
+
+const InventoryRow = memo(function InventoryRow({
+  id,
+  name,
+  category,
+  unit_of_measure,
+  total_quantity,
+  reorder_point,
+  onPress,
+}: InventoryRowProps) {
+  const low = reorder_point !== null && total_quantity <= reorder_point
+  const handlePress = useCallback(() => onPress(id), [id, onPress])
+  return (
+    <Pressable
+      onPress={handlePress}
+      className="flex-row items-center px-4 py-3 border-b border-border active:bg-muted/50"
+    >
+      <CategoryIcon category={category} />
+      <View className="flex-1 ml-3">
+        <Text
+          className="text-sm font-medium text-card-foreground"
+          numberOfLines={1}
+        >
+          {name}
+        </Text>
+        <Text className="text-xs text-muted-foreground mt-0.5">
+          {category} · {unit_of_measure}
+        </Text>
+      </View>
+      <View className="items-end">
+        <Text
+          className={`text-sm font-semibold ${
+            low ? "text-destructive" : "text-card-foreground"
+          }`}
+        >
+          {total_quantity}
+        </Text>
+        {reorder_point !== null && (
+          <Text className="text-[10px] text-muted-foreground">
+            reorder: {reorder_point}
+          </Text>
+        )}
+      </View>
+    </Pressable>
+  )
+})
 
 export default function InventoryScreen() {
   const router = useRouter()
@@ -113,6 +186,11 @@ export default function InventoryScreen() {
     [],
   )
 
+  const handleRowPress = useCallback(
+    (id: string) => router.push(`/(app)/inventory/${id}` as any),
+    [router],
+  )
+
   // Reset and reload page 1 whenever filters change
   useEffect(() => {
     setLoading(true)
@@ -147,16 +225,6 @@ export default function InventoryScreen() {
       setSortBy(col)
       setSortDir("asc")
     }
-  }
-
-  function SortIndicator({ col }: { col: SortBy }) {
-    if (col !== sortBy)
-      return <ChevronUp size={10} color={useColor("inactive")} className="ml-0.5" />
-    return sortDir === "asc" ? (
-      <ChevronUp size={10} color={useColor("primary")} className="ml-0.5" />
-    ) : (
-      <ChevronDown size={10} color={useColor("primary")} className="ml-0.5" />
-    )
   }
 
   return (
@@ -195,11 +263,10 @@ export default function InventoryScreen() {
           {["", ...Object.keys(CATEGORY_META)].map((cat) => {
             const active = category === cat
             return (
-              <TouchableOpacity
+              <Pressable
                 key={cat || "__all__"}
                 onPress={() => setCategory(cat)}
-                activeOpacity={0.7}
-                className={`px-3 py-1.5 rounded-full border ${
+                className={`px-3 py-1.5 rounded-full border active:opacity-70 ${
                   active ? "bg-primary border-primary" : "bg-card border-border"
                 }`}
               >
@@ -210,7 +277,7 @@ export default function InventoryScreen() {
                 >
                   {cat || "All"}
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
             )
           })}
         </ScrollView>
@@ -222,17 +289,16 @@ export default function InventoryScreen() {
           contentContainerClassName="gap-2 mb-2"
         >
           {SORT_COLUMNS.map(({ key, label }) => (
-            <TouchableOpacity
+            <Pressable
               key={key}
               onPress={() => handleSort(key)}
-              activeOpacity={0.7}
-              className="flex-row items-center px-3 py-1.5 rounded-full border border-border bg-card"
+              className="flex-row items-center px-3 py-1.5 rounded-full border border-border bg-card active:opacity-70"
             >
               <Text className="text-xs font-semibold text-muted-foreground">
                 {label}
               </Text>
-              <SortIndicator col={key} />
-            </TouchableOpacity>
+              <SortIndicator col={key} sortBy={sortBy} sortDir={sortDir} />
+            </Pressable>
           ))}
         </ScrollView>
       </View>
@@ -278,51 +344,23 @@ export default function InventoryScreen() {
               )}
             </View>
           }
-          renderItem={({ item }) => {
-            const low =
-              item.reorder_point !== null &&
-              item.total_quantity <= item.reorder_point
-            return (
-              <Pressable
-                onPress={() =>
-                  router.push(`/(app)/inventory/${item.id}` as any)
-                }
-                className="flex-row items-center px-4 py-3 border-b border-border active:bg-muted/50"
-              >
-                <CategoryIcon category={item.category} />
-                <View className="flex-1 ml-3">
-                  <Text
-                    className="text-sm font-medium text-card-foreground"
-                    numberOfLines={1}
-                  >
-                    {item.name}
-                  </Text>
-                  <Text className="text-xs text-muted-foreground mt-0.5">
-                    {item.category} · {item.unit_of_measure}
-                  </Text>
-                </View>
-                <View className="items-end">
-                  <Text
-                    className={`text-sm font-semibold ${
-                      low ? "text-destructive" : "text-card-foreground"
-                    }`}
-                  >
-                    {item.total_quantity}
-                  </Text>
-                  {item.reorder_point !== null && (
-                    <Text className="text-[10px] text-muted-foreground">
-                      reorder: {item.reorder_point}
-                    </Text>
-                  )}
-                </View>
-              </Pressable>
-            )
-          }}
+          renderItem={({ item }) => (
+            <InventoryRow
+              id={item.id}
+              name={item.name}
+              category={item.category}
+              unit_of_measure={item.unit_of_measure}
+              total_quantity={item.total_quantity}
+              reorder_point={item.reorder_point}
+              onPress={handleRowPress}
+            />
+          )}
         />
       )}
     </View>
   )
 }
+
 function skeletonBuilder(): import("react").ReactNode {
   return (
     <View>

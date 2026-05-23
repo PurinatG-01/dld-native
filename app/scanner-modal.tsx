@@ -1,5 +1,5 @@
 import { useEffect, useReducer, useCallback, useState } from "react";
-import { View, Text, TouchableOpacity } from "react-native";
+import { View, Text, Pressable } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -62,7 +62,7 @@ export default function ScannerModal() {
   const sweepProgress = useSharedValue(0);
 
   const sweepAnimatedStyle = useAnimatedStyle(() => ({
-    top: interpolate(sweepProgress.value, [0, 1], [0, FINDER_SIZE]),
+    transform: [{ translateY: interpolate(sweepProgress.value, [0, 1], [0, FINDER_SIZE]) }],
     opacity: interpolate(sweepProgress.value, [0, 0.08, 0.92, 1], [0, 1, 1, 0]),
   }));
 
@@ -222,14 +222,13 @@ export default function ScannerModal() {
           : "Align barcode within the frame"}
       </Text>
 
-      <TouchableOpacity
-        className="absolute right-5 w-10 h-10 rounded-full bg-black/50 items-center justify-center"
+      <Pressable
+        className="absolute right-5 w-10 h-10 rounded-full bg-black/50 items-center justify-center active:opacity-70"
         style={{ top: insets.top + 12 }}
         onPress={handleClose}
-        activeOpacity={0.7}
       >
         <X size={20} color={useColor("primary-foreground")} />
-      </TouchableOpacity>
+      </Pressable>
 
       <ScannerStatusPill scanStatus={scanState.status} />
 

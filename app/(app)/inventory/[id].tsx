@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { View, Text, ScrollView, TouchableOpacity } from "react-native"
+import { View, Text, ScrollView, Pressable } from "react-native"
 import { useLocalSearchParams, useRouter } from "expo-router"
 import {
   ChevronLeft,
@@ -158,16 +158,15 @@ export default function InventoryDetailScreen() {
   return (
     <View className="flex-1 bg-background">
       <View className="px-6 pb-2" style={{ paddingTop: Math.max(insets.top, 24) }}>
-        <TouchableOpacity
+        <Pressable
           onPress={() => router.back()}
-          className="flex-row items-center gap-1"
-          activeOpacity={0.7}
+          className="flex-row items-center gap-1 active:opacity-70"
         >
           <ChevronLeft size={16} color={useColor("muted-foreground")} />
           <Text className="text-sm text-muted-foreground">
             Back to Inventory
           </Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       {loading && <DetailSkeleton />}

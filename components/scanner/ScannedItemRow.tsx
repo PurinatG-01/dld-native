@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity } from "react-native";
+import { View, Text, Pressable } from "react-native";
 import { Plus, Minus, Package } from "lucide-react-native";
 import { useColor } from "@/lib/useColor";
 import type { ScannedItem } from "./types";
@@ -27,23 +27,21 @@ export function ScannedItemRow({ item, isJustAdded, onIncrement, onDecrement }: 
         </Text>
       </View>
       <View className="flex-row items-center gap-2 ml-3">
-        <TouchableOpacity
-          className="w-7 h-7 rounded-full bg-muted items-center justify-center"
+        <Pressable
+          className="w-7 h-7 rounded-full bg-muted items-center justify-center active:opacity-70"
           onPress={onDecrement}
-          activeOpacity={0.7}
         >
           <Minus size={13} color={useColor("muted-foreground")} />
-        </TouchableOpacity>
+        </Pressable>
         <Text className="text-sm font-semibold text-card-foreground w-5 text-center">
           {item.quantity}
         </Text>
-        <TouchableOpacity
-          className="w-7 h-7 rounded-full bg-primary items-center justify-center"
+        <Pressable
+          className="w-7 h-7 rounded-full bg-primary items-center justify-center active:opacity-70"
           onPress={onIncrement}
-          activeOpacity={0.7}
         >
           <Plus size={13} color={useColor("primary-foreground")} />
-        </TouchableOpacity>
+        </Pressable>
       </View>
     </View>
   );

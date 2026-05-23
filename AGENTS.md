@@ -1,20 +1,40 @@
 # Agent Instructions — dld-native
 
-React Native + Expo app for inventory management. Read this before writing any code. Always reference existing code patterns/structure/designs in the project first.
+React Native + Expo inventory management app for Thai dental clinics. Read this before writing any code. When in doubt about patterns, read existing files first — they are the source of truth. Always use the best practical pattern for react-native.
 
 ---
 
 ## Tech Stack
 
-| Layer      | Library                                    |
-| ---------- | ------------------------------------------ |
-| Framework  | Expo ~54 / React Native 0.81               |
-| Router     | expo-router (file-based, `app/` directory) |
-| Styling    | NativeWind v4 + Tailwind CSS v3            |
-| Animations | react-native-reanimated ~4                 |
-| Gestures   | react-native-gesture-handler               |
-| Backend    | Supabase (auth + edge functions)           |
-| Icons      | lucide-react-native                        |
+| Layer       | Library                                                           |
+| ----------- | ----------------------------------------------------------------- |
+| Framework   | Expo ~54 / React Native 0.81                                      |
+| Router      | expo-router ~6 (file-based, `app/` directory)                     |
+| Styling     | NativeWind v4 + Tailwind CSS v3                                   |
+| Animations  | react-native-reanimated ~4.1 + react-native-worklets              |
+| Gestures    | react-native-gesture-handler                                      |
+| Camera      | expo-camera ~17 (`CameraView`, `useCameraPermissions`)            |
+| Backend     | Supabase (auth + edge functions)                                  |
+| Icons       | lucide-react-native                                               |
+| Native tabs | react-native-bottom-tabs (via `expo-router/unstable-native-tabs`) |
+
+**Package manager:** Yarn 1.22.22
+
+---
+
+## Project Status (as of 2026-05-23)
+
+| Area                   | Status         | Note                                                                                          |
+| ---------------------- | -------------- | --------------------------------------------------------------------------------------------- |
+| App shell              | ✅ Done        | Native UITabBar (iPhone) + sidebar (iPad/Mac) · Expo Router v6 · portrait lock on iPhone      |
+| Auth — login           | ✅ Done        | Supabase email/password · redirects to dashboard                                              |
+| Inventory list         | ✅ Done        | Infinite scroll · pull-to-refresh · 300ms debounce search · live API                          |
+| Item detail            | ✅ Done        | Item metadata + stock batch list · live API                                                   |
+| Scanner — camera modal | 🟡 In progress | Real barcode scan + lookup live · 4-state machine · quantity controls · submit flow not built |
+| Dashboard              | 🟡 Stub        | Tab present, no content built                                                                 |
+| Account                | 🟡 Stub        | Tab present, no content built                                                                 |
+| BE — `create-movement` | 🔴 Not started | Write endpoint for stock_movement — needed for scanner submit flow                            |
+| RLS                    | 🔴 Stub only   | All policies open (`qual = true`), branch-scoping not enforced                                |
 
 ---
 
@@ -22,191 +42,69 @@ React Native + Expo app for inventory management. Read this before writing any c
 
 ### NativeWind first
 
-Use `className` for all styling. Do **not** reach for `StyleSheet.create` unless you have a specific reason listed below.
+Use `className` for all styling. Do **not** use `StyleSheet.create` unless the value cannot be expressed in NativeWind:
 
-```tsx
-// Correct
-<View className="flex-row items-center px-4 py-3 gap-2 rounded-xl bg-card">
-  <Text className="text-sm font-semibold text-card-foreground">Label</Text>
-</View>
-
-// Wrong — these are plain Tailwind equivalents, no reason to use StyleSheet
-<View style={{ flexDirection: "row", alignItems: "center", padding: 16 }}>
-```
-
-### When StyleSheet.create is allowed
-
-Only use `StyleSheet.create` (or inline `style={}`) for values that NativeWind cannot express:
-
-| Situation                                         | Example                              |
+| Allowed exception                                 | Example                              |
 | ------------------------------------------------- | ------------------------------------ |
 | `rgba()` / `hsla()` colors                        | `backgroundColor: "rgba(0,0,0,0.6)"` |
 | `position: "absolute"` with computed pixel values | `top: SCREEN_HEIGHT * 0.5 - 52`      |
 | Constants from `Dimensions`                       | `height: FINDER_SIZE`                |
-| `StyleSheet.hairlineWidth`                        | Border that must be 0.5px on iOS     |
+| `StyleSheet.hairlineWidth`                        | 0.5px iOS border                     |
 | Reanimated animated styles                        | `useAnimatedStyle(() => ({ ... }))`  |
-| Shadow props on iOS                               | `shadowColor`, `shadowRadius`, etc.  |
+| iOS shadow props                                  | `shadowColor`, `shadowRadius`        |
 
-When mixing both, NativeWind handles layout/color tokens and `style={}` handles the exceptions:
+### Color
 
-```tsx
-<View
-  className="flex-row items-center rounded-full px-3.5 py-1.5"
-  style={styles.pill}
->
-  <Text className="text-xs font-semibold text-success-foreground">
-    ✓ Added
-  </Text>
-</View>
-```
+All tokens are in `tailwind.config.js` — that is the single source of truth. Never add hex values to component code.
 
-### Color architecture
+Two ways to use a token:
 
-Two layers, one source of truth:
+- `className="bg-primary"` — NativeWind handles it
+- `useColor("primary")` from `@/lib/useColor` — for JS-level props where NativeWind can't reach
 
-```
-tailwind.config.js (single source of truth)
-  ├── className="bg-primary text-card-foreground"  → NativeWind applies to View/Text
-  └── useColor("primary")                          → resolves to "#4f46e5" for JS props
-```
+Use `useColor` for: icon `color=` props (lucide ignores `style.color`), `placeholderTextColor`, `tintColor`, Reanimated shadow colors.
 
-- `lucide-react-native` icons require the explicit `color` prop (they ignore `style.color`), so `useColor` is the bridge.
-- `placeholderTextColor`, `tintColor`, `colors` arrays, and other RN-specific color props also use `useColor`.
-- Everything else uses NativeWind className.
+---
 
-### Design tokens
+## React Native Rules
 
-All tokens are defined in `tailwind.config.js` — never add hex values to component code. These custom tokens extend the built-in Tailwind palette:
-
-| Token                    | Value     | Use for                                                       |
-| ------------------------ | --------- | ------------------------------------------------------------- |
-| `primary`                | `#4f46e5` | Buttons, active states, icons                                 |
-| `primary-foreground`     | `#ffffff` | Text on primary bg                                            |
-| `primary-light`          | `#818cf8` | Loading / in-progress indicators                              |
-| `primary-lighter`        | `#a5b4fc` | Text on loading pill bg                                       |
-| `background`             | `#f8fafc` | App background                                                |
-| `card`                   | `#ffffff` | Sheet / card surfaces                                         |
-| `card-foreground`        | `#0f172a` | Primary text on cards                                         |
-| `border`                 | `#e2e8f0` | Dividers, outlines                                            |
-| `foreground`             | `#0f172a` | General text color                                            |
-| `muted`                  | `#f1f5f9` | Subtle backgrounds                                            |
-| `muted-foreground`       | `#64748b` | Secondary / placeholder text                                  |
-| `destructive`            | `#ef4444` | Errors, delete actions                                        |
-| `destructive-foreground` | `#ffffff` | Text on destructive bg                                        |
-| `success`                | `#16a34a` | Success borders, icons                                        |
-| `success-foreground`     | `#4ade80` | Text on dark success bg                                       |
-| `success-muted`          | `#052e16` | Base for success alpha backgrounds — pair with `/20` or `/92` |
-| `error-foreground`       | `#f87171` | Text on dark error bg                                         |
-| `error-muted`            | `#2d0a0a` | Base for error alpha backgrounds — pair with `/92`            |
-| `inactive`               | `#cbd5e1` | Inactive sort indicators, muted decorative elements           |
-| `placeholder`            | `#94a3b8` | TextInput placeholder text, empty state icons                 |
-| `category-supplies`      | `#7c3aed` | Icon color — Anesthetics & Pharmaceuticals category           |
-| `category-equipment`     | `#64748b` | Icon color — Disposables & Office category                    |
-| `category-pharma`        | `#2563eb` | Icon color — Endodontic category / cold chain badge           |
-| `category-hygiene`       | `#0891b2` | Icon color — Hygiene & Preventives category                   |
-| `category-lab`           | `#d97706` | Icon color — Lab & Prosthodontic category                     |
-| `category-ppe`           | `#059669` | Icon color — PPE & Infection Control category                 |
-| `category-restorative`   | `#f43f5e` | Icon color — Restorative & Cosmetic category                  |
-| `category-surgical`      | `#ea580c` | Icon color — Surgical & Implant category                      |
-
-### Icons and JS-level color values
-
-Use the `useColor` hook from `@/lib/useColor` to resolve design tokens to hex values for icon `color` props, `placeholderTextColor`, `tintColor`, etc.:
-
-```tsx
-import { useColor } from "@/lib/useColor";
-
-function MyComponent() {
-  const primary = useColor("primary");
-  return <Package size={20} color={primary} />;
-}
-
-// Inline is also fine for single uses:
-<ActivityIndicator size="small" color={useColor("primary")} />
-```
-
-Token names are type-checked via the `ColorToken` type exported from `@/lib/useColor`. All custom tokens live in `tailwind.config.js` only — do **not** add new hex values to component code.
-
-### Component-level color conventions
-
-- **Never duplicate a hex value** across multiple files. If it's in `tailwind.config.js`, reference it via className or `useColor`.
-- **Category icon colors** (`category-*` tokens) are stored as token names in `lib/category-meta.ts:iconColorToken` — components resolve them at render time via `useColor(meta.iconColorToken)`.
-- **Safe overrides** (`rgba()`, iOS shadow colors) are the only acceptable inline hex values (per StyleSheet exception table above).
+- **`Pressable` only** — never `TouchableOpacity` or `TouchableHighlight`. Press feedback: `active:opacity-70` for buttons/chips, `active:bg-muted/50` for list rows.
+- **Animate `transform` and `opacity` only** — never `top`, `left`, `width`, or `height` inside `useAnimatedStyle`. Those trigger layout recalculation every frame.
+- **`FlatList` for dynamic lists** — `ScrollView` + `.map()` only for short static content (≤ ~8 items). Wrap row components in `React.memo`; pass primitives not objects; hoist callbacks with `useCallback`.
+- **No components inside components** — component functions defined inside a parent are recreated as new types every render, causing unmount/remount. Always define at module level.
+- **No falsy `&&` in JSX** — `{count && <X />}` crashes if `count === 0`. Use `{count > 0 ? <X /> : null}`.
 
 ---
 
 ## Project Conventions
 
-### File structure
-
-```
-app/
-  _layout.tsx          # Root layout
-  (app)/               # Authenticated tab screens
-    _layout.tsx
-    dashboard.tsx
-    scanner.tsx
-    inventory/
-  auth/                # Unauthenticated screens
-  scanner-modal.tsx    # Camera scanner (root modal)
-
-components/
-  ui/                  # Shared primitives (Skeleton, FlashMessage)
-  auth/
-  dashboard/
-  scanner/             # Scanner-specific components
-    types.ts           # ScanState, ScanAction, ScannedItem, ScanStatus
-    constants.ts       # SCREEN_HEIGHT, SHEET_TOP, FINDER_SIZE, CORNER_SIZE, HAIRLINE_WIDTH
-    ScannedItemRow.tsx # Single scanned item row with quantity stepper
-    ScannedItemList.tsx# ScrollView list: skeleton / empty state / rows
-    ScannerStatusPill.tsx # Animated floating pill (Scanning… / ✓ Added / ✕ Not found)
-    ScannerSheet.tsx   # Swipeable bottom sheet with gesture + header + list
-
-lib/
-  services/            # API service functions (Supabase edge functions)
-  supabase/            # Supabase client
-  useColor.ts          # useColor(ColorToken) hook + ColorToken type
-  types.ts             # Shared domain types
-```
-
 ### Services
 
-All backend calls live in `lib/services/`. Each function fetches the Supabase session, builds a URL to the relevant edge function, and throws on non-ok responses. Follow this pattern when adding new service functions — do not inline fetch calls in components.
+All backend calls live in `lib/services/`. See `lib/services/inventory.ts` for the pattern: get session → build URL to edge function → fetch with Bearer token → throw on error. Never inline fetch calls in components.
 
 ### Navigation
 
-Uses expo-router file-based routing. Modal screens are registered as root-level routes and pushed with `router.push("/screen-name")`. Tab screens live under `app/(app)/`.
+Tab layout uses `NativeTabs` + `NativeTabs.Trigger` with SF Symbol icons — see `app/(app)/_layout.tsx`. The scanner tab has `role="search"`, which opens `app/scanner-modal.tsx` as a root modal instead of navigating to `scanner.tsx`. Always call `markModalClosed()` from `lib/scanner-state.ts` before dismissing the modal.
 
-### Component extraction pattern
+### State machine
 
-Feature-specific components live under `components/<feature>/`. Each directory contains:
+Multi-step async flows use `useReducer` with a discriminated union state type. See `app/scanner-modal.tsx` for the reference implementation. Key rules: invalid transitions return state unchanged; while in a non-idle state, new trigger events are silently ignored (debounce guard via the reducer itself).
 
-- `types.ts` — all TypeScript types and discriminated unions for that feature
-- `constants.ts` — computed constants (e.g. Dimensions-based values, layout constants)
-- One file per component, named in PascalCase
+### Component structure
 
-**Props over shared state.** Pass data and callbacks down as props. Components do not import from `app/` or reach into sibling feature directories.
-
-**Self-contained animations.** If a component owns an animation (e.g. fade in/out), it declares its own `useSharedValue` and `useEffect` internally. Only pass a `SharedValue` as a prop when the parent genuinely needs to drive the animation from outside (e.g. a sheet whose position is controlled by a parent gesture).
-
-```tsx
-// Good — pill owns its opacity animation
-export function ScannerStatusPill({ scanStatus }: { scanStatus: ScanStatus }) {
-  const opacity = useSharedValue(0);
-  useEffect(() => { opacity.value = withTiming(...); }, [scanStatus]);
-  ...
-}
-
-// Good — sheet receives translateY from parent that coordinates multiple views
-export function ScannerSheet({ translateY }: { translateY: SharedValue<number> }) { ... }
-```
+Feature components live under `components/<feature>/` with `types.ts` + `constants.ts` co-located. See `components/scanner/` as the reference. Pass data and callbacks as props — components do not reach into `app/` or sibling feature directories. If a component owns an animation, it declares its own `useSharedValue` internally; only pass a `SharedValue` as a prop when the parent genuinely needs to drive it.
 
 ### Reanimated
 
-The project uses Reanimated v4. Use `useSharedValue` + `useAnimatedStyle` for animated styles. Animated styles must be returned from `useAnimatedStyle` — do not derive them inline in the component body.
+Animated styles must be returned from `useAnimatedStyle` — never derive them inline in the component body.
 
 ---
 
-## Claude Code note
+## Testing
 
-Claude Code reads `CLAUDE.md` in addition to this file. Keep both in sync if you create one.
+Tests mirror `lib/` under `__tests__/`. Stack: Jest + `jest-expo` + `@testing-library/react-native`.
+
+```
+yarn test        # single run
+yarn test:watch  # watch mode
+```
