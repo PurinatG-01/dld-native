@@ -76,6 +76,23 @@ export type GetItemStockResult = {
   stocks: ItemStockRecord[];
 };
 
+export type BranchLocationItem = {
+  id: string;
+  branch_id: string;
+  parent_id: string | null;
+  name: string;
+  type: "operatory" | "stockroom" | "warehouse";
+  created_at: string;
+};
+
+export type SupplierItem = {
+  id: string;
+  name: string;
+  contact_name: string | null;
+  email: string | null;
+  phone: string | null;
+};
+
 export async function listItems(params: {
   page?: number;
   limit?: number;
@@ -171,6 +188,59 @@ export async function getItemStock(
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }));
     throw new Error(err.error ?? "item-stock request failed");
+  }
+
+  return res.json();
+}
+
+export async function listBranchLocations(branchId: string): Promise<BranchLocationItem[]> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session) throw new Error("Not authenticated");
+
+  const url = new URL(
+    "/functions/v1/list-branch-locations",
+    process.env.EXPO_PUBLIC_SUPABASE_URL
+  );
+  url.searchParams.set("branch_id", branchId);
+
+  const res = await fetch(url.toString(), {
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(err.error ?? "list-branch-locations request failed");
+  }
+
+  return res.json();
+}
+
+export async function listSuppliers(): Promise<SupplierItem[]> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session) throw new Error("Not authenticated");
+
+  const url = new URL(
+    "/functions/v1/list-suppliers",
+    process.env.EXPO_PUBLIC_SUPABASE_URL
+  );
+
+  const res = await fetch(url.toString(), {
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(err.error ?? "list-suppliers request failed");
   }
 
   return res.json();

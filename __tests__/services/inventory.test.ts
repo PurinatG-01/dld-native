@@ -7,7 +7,12 @@ jest.mock("@/lib/supabase/client", () => ({
 global.fetch = jest.fn();
 
 import { supabase } from "@/lib/supabase/client";
-import { listItems, getItemStock } from "@/lib/services/inventory";
+import {
+  listItems,
+  getItemStock,
+  listBranchLocations,
+  listSuppliers,
+} from "@/lib/services/inventory";
 
 const mockGetSession = supabase.auth.getSession as jest.Mock;
 
@@ -70,5 +75,61 @@ describe("getItemStock", () => {
     });
     const result = await getItemStock("item-1");
     expect(result).toEqual(payload);
+  });
+});
+
+describe("listBranchLocations", () => {
+  afterEach(() => jest.clearAllMocks());
+
+  it("throws when no session", async () => {
+    mockGetSession.mockResolvedValue({ data: { session: null } });
+    await expect(listBranchLocations("branch-1")).rejects.toThrow("Not authenticated");
+  });
+
+  it("returns locations on success", async () => {
+    mockGetSession.mockResolvedValue({ data: { session: SESSION } });
+    const payload = [
+      { id: "loc-1", branch_id: "branch-1", parent_id: null, name: "Stockroom A", type: "stockroom", created_at: "2026-01-01" },
+    ];
+    (fetch as jest.Mock).mockResolvedValue({ ok: true, json: async () => payload });
+    const result = await listBranchLocations("branch-1");
+    expect(result).toEqual(payload);
+  });
+
+  it("throws on non-ok response", async () => {
+    mockGetSession.mockResolvedValue({ data: { session: SESSION } });
+    (fetch as jest.Mock).mockResolvedValue({
+      ok: false,
+      statusText: "Not Found",
+      json: async () => ({ error: "Not Found" }),
+    });
+    await expect(listBranchLocations("branch-1")).rejects.toThrow("Not Found");
+  });
+});
+
+describe("listSuppliers", () => {
+  afterEach(() => jest.clearAllMocks());
+
+  it("throws when no session", async () => {
+    mockGetSession.mockResolvedValue({ data: { session: null } });
+    await expect(listSuppliers()).rejects.toThrow("Not authenticated");
+  });
+
+  it("returns suppliers on success", async () => {
+    mockGetSession.mockResolvedValue({ data: { session: SESSION } });
+    const payload = [{ id: "sup-1", name: "Med Supply Co", contact_name: null, email: null, phone: null }];
+    (fetch as jest.Mock).mockResolvedValue({ ok: true, json: async () => payload });
+    const result = await listSuppliers();
+    expect(result).toEqual(payload);
+  });
+
+  it("throws on non-ok response", async () => {
+    mockGetSession.mockResolvedValue({ data: { session: SESSION } });
+    (fetch as jest.Mock).mockResolvedValue({
+      ok: false,
+      statusText: "Server Error",
+      json: async () => ({ error: "Server Error" }),
+    });
+    await expect(listSuppliers()).rejects.toThrow("Server Error");
   });
 });
