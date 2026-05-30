@@ -6,8 +6,9 @@ import Animated, {
   type SharedValue,
 } from "react-native-reanimated";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScannedItemList } from "./ScannedItemList";
-import { SCREEN_HEIGHT, SNAP_COLLAPSED, SNAP_EXPANDED } from "./constants";
+import { SCREEN_HEIGHT, SNAP_COLLAPSED, SHEET_EXPANDED_MIN_GAP } from "./constants";
 import type { ScannedItem, ScanState } from "./types";
 
 type Props = {
@@ -26,6 +27,8 @@ export function ScannerSheet({
   bottomInset,
 }: Props) {
   const startY = useSharedValue(0);
+  const insets = useSafeAreaInsets();
+  const snapExpanded = insets.top + SHEET_EXPANDED_MIN_GAP;
 
   const panGesture = Gesture.Pan()
     .onStart(() => {
@@ -33,7 +36,7 @@ export function ScannerSheet({
     })
     .onUpdate((e) => {
       translateY.value = Math.max(
-        SNAP_EXPANDED,
+        snapExpanded,
         Math.min(SNAP_COLLAPSED, startY.value + e.translationY)
       );
     })
@@ -41,7 +44,7 @@ export function ScannerSheet({
       const shouldExpand =
         e.velocityY < -500 || translateY.value < SNAP_COLLAPSED / 2;
       translateY.value = withSpring(
-        shouldExpand ? SNAP_EXPANDED : SNAP_COLLAPSED,
+        shouldExpand ? snapExpanded : SNAP_COLLAPSED,
         { velocity: e.velocityY, damping: 20, stiffness: 200, overshootClamping: true }
       );
     });

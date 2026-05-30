@@ -1,5 +1,5 @@
 import { useEffect, useReducer, useCallback, useState, useRef } from "react";
-import { View, Text, Pressable } from "react-native";
+import { View, Text, Pressable, Alert } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -170,9 +170,23 @@ export default function ScannerModal() {
   }, [scanState.status]);
 
   const handleClose = useCallback(() => {
-    markModalClosed();
-    router.dismissTo("/(app)/dashboard");
-  }, [router]);
+    const dismiss = () => {
+      markModalClosed();
+      router.dismissTo("/(app)/dashboard");
+    };
+    if (scannedItems.length === 0) {
+      dismiss();
+      return;
+    }
+    Alert.alert(
+      "Exit scanner?",
+      "Scanned items won't be saved.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Exit", style: "destructive", onPress: dismiss },
+      ]
+    );
+  }, [router, scannedItems.length]);
 
   const adjustQuantity = useCallback((id: string, delta: number) => {
     setScannedItems((prev) =>
