@@ -1,7 +1,7 @@
-import { useEffect, useReducer, useCallback, useState } from "react";
+import { useEffect, useReducer, useCallback, useState, useRef } from "react";
 import { View, Text, Pressable } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { X } from "lucide-react-native";
 import { markModalClosed } from "@/lib/scanner-state";
@@ -13,7 +13,7 @@ import Animated, {
   Easing,
   interpolate,
 } from "react-native-reanimated";
-import { lookupItemByBarcode } from "@/lib/services/inventory";
+import { lookupItemByBarcode, listItems, createInbound } from "@/lib/services/inventory";
 import { ScannerSheet } from "@/components/scanner/ScannerSheet";
 import { ScannerStatusPill } from "@/components/scanner/ScannerStatusPill";
 import {
@@ -24,7 +24,9 @@ import {
   SNAP_COLLAPSED,
 } from "@/components/scanner/constants";
 import { useColor } from "@/lib/useColor";
-import type { ScanState, ScanAction, ScannedItem, ScanStatus } from "@/components/scanner/types";
+import type { ScanState, ScanAction, ScannedItem, ScanStatus, InboundSessionParams } from "@/components/scanner/types";
+
+type MockPoolItem = { barcode: string; itemId: string; name: string };
 
 function scanReducer(state: ScanState, action: ScanAction): ScanState {
   switch (action.type) {
@@ -47,9 +49,30 @@ function scanReducer(state: ScanState, action: ScanAction): ScanState {
 export default function ScannerModal() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+
+  const { locationId, locationName, supplierId, referenceNote } =
+    useLocalSearchParams<{
+      locationId: string;
+      locationName: string;
+      supplierId?: string;
+      referenceNote?: string;
+    }>();
+
+  const sessionParams: InboundSessionParams = {
+    locationId,
+    locationName,
+    supplierId,
+    referenceNote,
+  };
+
   const [permission, requestPermission] = useCameraPermissions();
   const [scannedItems, setScannedItems] = useState<ScannedItem[]>([]);
   const [scanState, dispatch] = useReducer(scanReducer, { status: "idle" });
+  const [selectedItem, setSelectedItem] = useState<ScannedItem | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [mockPool, setMockPool] = useState<MockPoolItem[]>([]);
+  const mockIndexRef = useRef(0);
 
   const finderColorMap: Record<ScanStatus, string> = {
     idle: "rgba(255,255,255,0.85)",
@@ -94,6 +117,22 @@ export default function ScannerModal() {
     requestPermission();
   }, []);
 
+  useEffect(() => {
+    listItems({ limit: 20 })
+      .then((result) => {
+        setMockPool(
+          result.data.map((item) => ({
+            barcode: `MOCK-${item.id.slice(0, 8)}`,
+            itemId: item.id,
+            name: item.name,
+          }))
+        );
+      })
+      .catch(() => {
+        // Pool stays empty — simulate scan button won't cycle items
+      });
+  }, []);
+
   const handleBarcodeScanned = useCallback(
     ({ data }: { data: string }) => {
       if (scanState.status !== "idle") return;
@@ -116,6 +155,7 @@ export default function ScannerModal() {
               {
                 id: `${Date.now()}-${Math.random()}`,
                 barcode: data,
+                itemId: inventoryItem.id,
                 name: inventoryItem.name,
                 quantity: 1,
                 scannedAt: new Date(),
@@ -129,6 +169,37 @@ export default function ScannerModal() {
     },
     [scanState.status]
   );
+
+  const handleSimulateScan = useCallback(() => {
+    if (scanState.status !== "idle" || mockPool.length === 0) return;
+    const mock = mockPool[mockIndexRef.current % mockPool.length];
+    mockIndexRef.current += 1;
+
+    dispatch({ type: "SCAN_START", barcode: mock.barcode });
+
+    setTimeout(() => {
+      setScannedItems((prev) => {
+        const existing = prev.find((i) => i.barcode === mock.barcode);
+        if (existing) {
+          return prev.map((i) =>
+            i.barcode === mock.barcode ? { ...i, quantity: i.quantity + 1 } : i
+          );
+        }
+        return [
+          {
+            id: `${Date.now()}-${Math.random()}`,
+            barcode: mock.barcode,
+            itemId: mock.itemId,
+            name: mock.name,
+            quantity: 1,
+            scannedAt: new Date(),
+          },
+          ...prev,
+        ];
+      });
+      dispatch({ type: "SCAN_SUCCESS", barcode: mock.barcode });
+    }, 600);
+  }, [scanState.status, mockPool]);
 
   const handleClose = () => {
     markModalClosed();
@@ -150,14 +221,13 @@ export default function ScannerModal() {
   if (!permission || !permission.granted) {
     return (
       <View className="flex-1 bg-black items-center justify-center px-6">
-        <TouchableOpacity
-          className="absolute right-5 w-10 h-10 rounded-full bg-black/50 items-center justify-center"
+        <Pressable
+          className="absolute right-5 w-10 h-10 rounded-full bg-black/50 items-center justify-center active:opacity-70"
           style={{ top: insets.top + 12 }}
           onPress={handleClose}
-          activeOpacity={0.7}
         >
           <X size={20} color={useColor("primary-foreground")} />
-        </TouchableOpacity>
+        </Pressable>
         <Text className="text-white text-base text-center leading-6">
           Camera access is required to scan items.{"\n"}Please enable it in
           Settings.
