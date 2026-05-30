@@ -12,6 +12,7 @@ import {
   getItemStock,
   listBranchLocations,
   listSuppliers,
+  createInbound,
 } from "@/lib/services/inventory";
 
 const mockGetSession = supabase.auth.getSession as jest.Mock;
@@ -131,5 +132,47 @@ describe("listSuppliers", () => {
       json: async () => ({ error: "Server Error" }),
     });
     await expect(listSuppliers()).rejects.toThrow("Server Error");
+  });
+});
+
+describe("createInbound", () => {
+  afterEach(() => jest.clearAllMocks());
+
+  const params = {
+    locationId: "loc-1",
+    items: [{ itemId: "item-1", quantity: 2 }],
+  };
+
+  it("throws when no session", async () => {
+    mockGetSession.mockResolvedValue({ data: { session: null } });
+    await expect(createInbound(params)).rejects.toThrow("Not authenticated");
+  });
+
+  it("resolves on success", async () => {
+    mockGetSession.mockResolvedValue({ data: { session: SESSION } });
+    (fetch as jest.Mock).mockResolvedValue({ ok: true, json: async () => ({}) });
+    await expect(createInbound(params)).resolves.toBeUndefined();
+  });
+
+  it("sends POST with correct body", async () => {
+    mockGetSession.mockResolvedValue({ data: { session: SESSION } });
+    (fetch as jest.Mock).mockResolvedValue({ ok: true, json: async () => ({}) });
+    await createInbound(params);
+    const [, options] = (fetch as jest.Mock).mock.calls[0];
+    expect(options.method).toBe("POST");
+    expect(JSON.parse(options.body)).toMatchObject({
+      locationId: "loc-1",
+      items: [{ itemId: "item-1", quantity: 2 }],
+    });
+  });
+
+  it("throws on non-ok response", async () => {
+    mockGetSession.mockResolvedValue({ data: { session: SESSION } });
+    (fetch as jest.Mock).mockResolvedValue({
+      ok: false,
+      statusText: "Internal Server Error",
+      json: async () => ({ error: "DB error" }),
+    });
+    await expect(createInbound(params)).rejects.toThrow("DB error");
   });
 });

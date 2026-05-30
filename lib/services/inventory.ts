@@ -93,6 +93,22 @@ export type SupplierItem = {
   phone: string | null;
 };
 
+export type CreateInboundItem = {
+  itemId: string;
+  quantity: number;
+  lotNumber?: string;
+  expiryDate?: string;
+  serialNumber?: string;
+  unitCost?: number;
+};
+
+export type CreateInboundParams = {
+  locationId: string;
+  supplierId?: string;
+  referenceNote?: string;
+  items: CreateInboundItem[];
+};
+
 export async function listItems(params: {
   page?: number;
   limit?: number;
@@ -244,4 +260,30 @@ export async function listSuppliers(): Promise<SupplierItem[]> {
   }
 
   return res.json();
+}
+
+export async function createInbound(params: CreateInboundParams): Promise<void> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session) throw new Error("Not authenticated");
+
+  const url = new URL(
+    "/functions/v1/create-inbound",
+    process.env.EXPO_PUBLIC_SUPABASE_URL
+  );
+
+  const res = await fetch(url.toString(), {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(params),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(err.error ?? "create-inbound request failed");
+  }
 }
