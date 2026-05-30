@@ -9,6 +9,10 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen
+            name="inbound-header"
+            options={{ presentation: "modal", headerShown: false }}
+          />
+          <Stack.Screen
             name="scanner-modal"
             options={{ presentation: "modal", headerShown: false }}
           />

@@ -13,7 +13,7 @@ export default function ScannerTab() {
         return;
       }
       markModalOpened();
-      router.push("/scanner-modal");
+      router.push("/inbound-header");
     }, [router])
   );
 
