@@ -15,6 +15,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { lookupItemByBarcode, listItems, createInbound } from "@/lib/services/inventory";
 import { ScannerSheet } from "@/components/scanner/ScannerSheet";
+import { ItemDetailSheet } from "@/components/scanner/ItemDetailSheet";
 import { ScannerStatusPill } from "@/components/scanner/ScannerStatusPill";
 import {
   FINDER_SIZE,
@@ -201,6 +202,50 @@ export default function ScannerModal() {
     }, 600);
   }, [scanState.status, mockPool]);
 
+  const handleSaveDetails = useCallback(
+    (id: string, details: Partial<ScannedItem>) => {
+      setScannedItems((prev) =>
+        prev.map((item) => (item.id === id ? { ...item, ...details } : item))
+      );
+      setSelectedItem(null);
+    },
+    []
+  );
+
+  const handleSubmit = useCallback(async () => {
+    if (scannedItems.length === 0 || isSubmitting) return;
+    setIsSubmitting(true);
+    setSubmitError(null);
+    try {
+      await createInbound({
+        locationId: sessionParams.locationId,
+        supplierId: sessionParams.supplierId,
+        referenceNote: sessionParams.referenceNote,
+        items: scannedItems.map((item) => ({
+          itemId: item.itemId,
+          quantity: item.quantity,
+          lotNumber: item.lotNumber,
+          expiryDate: item.expiryDate,
+          serialNumber: item.serialNumber,
+          unitCost: item.unitCost,
+        })),
+      });
+      markModalClosed();
+      router.dismissTo("/(app)/dashboard");
+    } catch (e) {
+      setSubmitError(e instanceof Error ? e.message : "Submission failed");
+      setIsSubmitting(false);
+    }
+  }, [scannedItems, isSubmitting, sessionParams, router]);
+
+  const handlePressItem = useCallback(
+    (id: string) => {
+      const found = scannedItems.find((i) => i.id === id) ?? null;
+      setSelectedItem(found);
+    },
+    [scannedItems]
+  );
+
   const handleClose = () => {
     markModalClosed();
     router.dismissTo("/(app)/dashboard");
@@ -306,7 +351,26 @@ export default function ScannerModal() {
         translateY={translateY}
         items={scannedItems}
         scanState={scanState}
+        sessionParams={sessionParams}
         onAdjustQuantity={adjustQuantity}
+        onPressItem={handlePressItem}
+        onSubmit={handleSubmit}
+        isSubmitting={isSubmitting}
+        bottomInset={insets.bottom}
+      />
+      {submitError !== null && (
+        <View
+          className="absolute inset-x-4 bg-destructive/10 border border-destructive/20 rounded-xl px-4 py-3"
+          style={{ bottom: insets.bottom + 100 }}
+        >
+          <Text className="text-sm text-destructive">{submitError}</Text>
+        </View>
+      )}
+
+      <ItemDetailSheet
+        item={selectedItem}
+        onSave={handleSaveDetails}
+        onClose={() => setSelectedItem(null)}
         bottomInset={insets.bottom}
       />
     </View>
