@@ -1,16 +1,19 @@
-import { ScrollView, View, Text } from "react-native";
+import { ScrollView, View, Text, Pressable } from "react-native";
 import {
   Package,
   Activity,
   TrendingUp,
   AlertCircle,
+  PackagePlus,
 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { useColor } from "@/lib/useColor";
 
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   return (
     <ScrollView
       className="flex-1 bg-background"
@@ -25,6 +28,21 @@ export default function DashboardScreen() {
           Live inventory overview
         </Text>
       </View>
+
+      <Pressable
+        onPress={() => router.push("/inbound")}
+        className="flex-row items-center gap-3 bg-primary rounded-xl px-4 py-4 mb-6 active:opacity-70"
+      >
+        <PackagePlus size={22} color={useColor("primary-foreground")} />
+        <View className="flex-1">
+          <Text className="text-sm font-bold text-primary-foreground">
+            Receive delivery
+          </Text>
+          <Text className="text-xs text-primary-foreground/80 mt-0.5">
+            Record incoming stock
+          </Text>
+        </View>
+      </Pressable>
 
       <ScrollView
         horizontal

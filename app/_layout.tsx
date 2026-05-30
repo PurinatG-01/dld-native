@@ -1,7 +1,7 @@
-import "../global.css";
-import { Stack } from "expo-router";
-import { SafeAreaProvider } from "react-native-safe-area-context";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
+import "../global.css"
+import { Stack } from "expo-router"
+import { SafeAreaProvider } from "react-native-safe-area-context"
+import { GestureHandlerRootView } from "react-native-gesture-handler"
 
 export default function RootLayout() {
   return (
@@ -12,8 +12,12 @@ export default function RootLayout() {
             name="scanner-modal"
             options={{ presentation: "modal", headerShown: false }}
           />
+          <Stack.Screen
+            name="inbound"
+            options={{ headerShown: true, title: "Receive delivery" }}
+          />
         </Stack>
       </SafeAreaProvider>
     </GestureHandlerRootView>
-  );
+  )
 }
