@@ -3,9 +3,21 @@ export type ScanStatus = "idle" | "loading" | "success" | "error";
 export type ScannedItem = {
   id: string;
   barcode: string;
+  itemId: string;
   name: string;
   quantity: number;
   scannedAt: Date;
+  lotNumber?: string;
+  expiryDate?: string;
+  serialNumber?: string;
+  unitCost?: number;
+};
+
+export type InboundSessionParams = {
+  locationId: string;
+  locationName: string;
+  supplierId?: string;
+  referenceNote?: string;
 };
 
 export type ScanState =
