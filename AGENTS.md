@@ -1,6 +1,16 @@
 # Agent Instructions — dld-native
 
-React Native + Expo inventory management app for Thai dental clinics. Read this before writing any code. When in doubt about patterns, read existing files first — they are the source of truth. Always use the best practical pattern for react-native.
+React Native + Expo inventory management app for Thai dental clinics. **Read this before writing any code.** When in doubt about patterns, read existing files first — they are the source of truth. Always use the best practical pattern for React Native.
+
+## Contents
+
+- [Tech Stack](#tech-stack)
+- [Project Status](#project-status)
+- [Epic Documentation](#epic-documentation)
+- [Styling Rules](#styling-rules)
+- [React Native Rules](#react-native-rules)
+- [Project Conventions](#project-conventions)
+- [Testing](#testing)
 
 ---
 
@@ -22,19 +32,43 @@ React Native + Expo inventory management app for Thai dental clinics. Read this 
 
 ---
 
-## Project Status (as of 2026-05-23)
+## Project Status
 
-| Area                   | Status         | Note                                                                                          |
-| ---------------------- | -------------- | --------------------------------------------------------------------------------------------- |
-| App shell              | ✅ Done        | Native UITabBar (iPhone) + sidebar (iPad/Mac) · Expo Router v6 · portrait lock on iPhone      |
-| Auth — login           | ✅ Done        | Supabase email/password · redirects to dashboard                                              |
-| Inventory list         | ✅ Done        | Infinite scroll · pull-to-refresh · 300ms debounce search · live API                          |
-| Item detail            | ✅ Done        | Item metadata + stock batch list · live API                                                   |
-| Scanner — camera modal | 🟡 In progress | Real barcode scan + lookup live · 4-state machine · quantity controls · submit flow not built |
-| Dashboard              | 🟡 Stub        | Tab present, no content built                                                                 |
-| Account                | 🟡 Stub        | Tab present, no content built                                                                 |
-| BE — `create-movement` | 🔴 Not started | Write endpoint for stock_movement — needed for scanner submit flow                            |
-| RLS                    | 🔴 Stub only   | All policies open (`qual = true`), branch-scoping not enforced                                |
+_As of 2026-05-30._
+
+| Area                   | Status         | Note                                                                                                                                                    |
+| ---------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| App shell              | ✅ Done        | Native UITabBar (iPhone) + sidebar (iPad/Mac) · Expo Router v6 · portrait lock on iPhone                                                                |
+| Auth — login           | ✅ Done        | Supabase email/password · redirects to dashboard                                                                                                        |
+| Inventory list         | ✅ Done        | Infinite scroll · pull-to-refresh · 500ms debounce search · category filter · sort · live API                                                           |
+| Item detail            | ✅ Done        | Item metadata + stock batch list · live API                                                                                                             |
+| Scanner — camera modal | 🟡 In progress | Real barcode scan + lookup live · 4-state machine · swipeable summary sheet · quantity controls · dev-only simulate-scan button · submit flow not built |
+| Dashboard              | 🟡 Stub        | Tab present · placeholder stat cards, no live data                                                                                                      |
+| Account                | ✅ Done        | Profile card · settings row (inert) · confirm-dialog sign-out                                                                                           |
+| BE — `create-movement` | 🔴 Not started | Write endpoint for stock_movement — needed for scanner submit flow                                                                                      |
+| RLS                    | 🔴 Stub only   | All policies open (`qual = true`), branch-scoping not enforced                                                                                          |
+
+---
+
+## Epic Documentation
+
+Each epic has (or will have) a living doc under `docs/` describing its **current implemented logic** — not a plan or spec. Read the relevant epic doc before changing that feature, and keep it in sync when the logic changes.
+
+| Epic      | Status         | Doc                                            |
+| --------- | -------------- | ---------------------------------------------- |
+| Scanner   | 🟡 In progress | [`docs/scanner-epic.md`](docs/scanner-epic.md) |
+| Inventory | ✅ Done        | _Not yet written — see Project Status + code_  |
+| Auth      | ✅ Done        | _Not yet written — see Project Status + code_  |
+| Account   | ✅ Done        | _Not yet written — see Project Status + code_  |
+| Dashboard | 🟡 Stub        | _Not yet written_                              |
+
+### Scanner
+
+Barcode-scanner feature: camera modal, lookup against live inventory, scanned-items list with quantities. The doc covers the `useReducer` state machine, scan lifecycle (real + dev simulate), swipeable summary sheet, components, and what's done vs not.
+
+→ [`docs/scanner-epic.md`](docs/scanner-epic.md)
+
+> Adding an epic doc for another area? Add its row to the table above and a matching subsection here. Epic docs describe **current logic only** — historical design notes and plans live in Notion (Dental Logistics → Tech) and git history, not in this repo.
 
 ---
 
@@ -88,7 +122,7 @@ Tab layout uses `NativeTabs` + `NativeTabs.Trigger` with SF Symbol icons — see
 
 ### State machine
 
-Multi-step async flows use `useReducer` with a discriminated union state type. See `app/scanner-modal.tsx` for the reference implementation. Key rules: invalid transitions return state unchanged; while in a non-idle state, new trigger events are silently ignored (debounce guard via the reducer itself).
+Multi-step async flows use `useReducer` with a discriminated union state type. See `app/scanner-modal.tsx` for the reference implementation (full walkthrough in the [Scanner epic doc](docs/scanner-epic.md)). Key rules: invalid transitions return state unchanged; while in a non-idle state, new trigger events are silently ignored (debounce guard via the reducer itself).
 
 ### Component structure
 
