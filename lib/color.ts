@@ -34,6 +34,6 @@ const COLORS = {
 } as const
 export type ColorToken = keyof typeof COLORS
 
-export function useColor(token: ColorToken): string {
+export function getColor(token: ColorToken): string {
   return COLORS[token]
 }

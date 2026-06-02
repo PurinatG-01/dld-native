@@ -17,7 +17,7 @@ import {
 import { Skeleton } from "@/components/ui/Skeleton"
 import { formatDate, isExpiringSoon } from "@/lib/utils"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
-import { useColor } from "@/lib/useColor"
+import { getColor } from "@/lib/color"
 
 const STATUS_STYLES: Record<string, { bg: string; text: string }> = {
   pending: { bg: "bg-muted", text: "text-muted-foreground" },
@@ -44,7 +44,7 @@ function MetaField({
         {label}
       </Text>
       <View className="flex-row items-center gap-1">
-        {highlight && <AlertTriangle size={13} color={useColor("destructive")} />}
+        {highlight && <AlertTriangle size={13} color={getColor("destructive")} />}
         <Text
           className={`font-medium ${
             highlight ? "text-destructive" : "text-card-foreground"
@@ -162,7 +162,7 @@ export default function InventoryDetailScreen() {
           onPress={() => router.back()}
           className="flex-row items-center gap-1 active:opacity-70"
         >
-          <ChevronLeft size={16} color={useColor("muted-foreground")} />
+          <ChevronLeft size={16} color={getColor("muted-foreground")} />
           <Text className="text-sm text-muted-foreground">
             Back to Inventory
           </Text>
@@ -190,13 +190,13 @@ export default function InventoryDetailScreen() {
                     <View
                       className={`w-14 h-14 rounded-xl items-center justify-center ${catMeta.bg}`}
                     >
-                      <Icon size={26} color={useColor(catMeta.iconColorToken)} />
+                      <Icon size={26} color={getColor(catMeta.iconColorToken)} />
                     </View>
                   )
                 }
                 return (
                   <View className="w-14 h-14 rounded-xl bg-primary/10 items-center justify-center">
-                    <Package size={24} color={useColor("primary")} />
+                    <Package size={24} color={getColor("primary")} />
                   </View>
                 )
               })()}
@@ -208,7 +208,7 @@ export default function InventoryDetailScreen() {
                 <View className="flex-row flex-wrap gap-2">
                   {data.item.is_controlled_drug && (
                     <View className="flex-row items-center gap-1 bg-destructive/10 px-2 py-0.5 rounded-full">
-                      <ShieldAlert size={11} color={useColor("destructive")} />
+                      <ShieldAlert size={11} color={getColor("destructive")} />
                       <Text className="text-[10px] font-medium text-destructive">
                         Controlled
                       </Text>
@@ -216,7 +216,7 @@ export default function InventoryDetailScreen() {
                   )}
                   {data.item.requires_refrigeration && (
                     <View className="flex-row items-center gap-1 bg-blue-100 px-2 py-0.5 rounded-full">
-                      <Thermometer size={11} color={useColor("category-pharma")} />
+                      <Thermometer size={11} color={getColor("category-pharma")} />
                       <Text className="text-[10px] font-medium text-blue-700">
                         Cold chain
                       </Text>

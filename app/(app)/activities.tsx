@@ -10,7 +10,7 @@ import {
 } from "react-native"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { History, ChevronUp, ChevronDown } from "lucide-react-native"
-import { useColor } from "@/lib/useColor"
+import { getColor } from "@/lib/color"
 import {
   listMovements,
   type StockMovement,
@@ -53,12 +53,12 @@ function SortIndicator({
 }) {
   if (col !== sortBy)
     return (
-      <ChevronUp size={10} color={useColor("inactive")} className="ml-0.5" />
+      <ChevronUp size={10} color={getColor("inactive")} className="ml-0.5" />
     )
   return sortDir === "asc" ? (
-    <ChevronUp size={10} color={useColor("primary")} className="ml-0.5" />
+    <ChevronUp size={10} color={getColor("primary")} className="ml-0.5" />
   ) : (
-    <ChevronDown size={10} color={useColor("primary")} className="ml-0.5" />
+    <ChevronDown size={10} color={getColor("primary")} className="ml-0.5" />
   )
 }
 
@@ -149,7 +149,7 @@ export default function ActivitiesScreen() {
         style={{ paddingTop: Math.max(insets.top, 24) }}
       >
         <View className="flex-row items-center gap-3 mb-6">
-          <History size={20} color={useColor("primary")} />
+          <History size={20} color={getColor("primary")} />
           <Text className="text-2xl font-bold text-foreground tracking-tight">
             Activities
           </Text>
@@ -231,14 +231,14 @@ export default function ActivitiesScreen() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={handleRefresh}
-              tintColor={useColor("primary")}
-              colors={[useColor("primary")]}
+              tintColor={getColor("primary")}
+              colors={[getColor("primary")]}
             />
           }
           ListFooterComponent={
             loadingMore ? (
               <View className="py-4 items-center">
-                <ActivityIndicator size="small" color={useColor("primary")} />
+                <ActivityIndicator size="small" color={getColor("primary")} />
               </View>
             ) : null
           }

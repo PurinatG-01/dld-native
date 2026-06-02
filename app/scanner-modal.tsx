@@ -23,7 +23,7 @@ import {
   SHEET_TOP,
   SNAP_COLLAPSED,
 } from "@/components/scanner/constants";
-import { useColor } from "@/lib/useColor";
+import { getColor } from "@/lib/color";
 import type { ScanState, ScanAction, ScannedItem, ScanStatus } from "@/components/scanner/types";
 
 const MOCK_SCAN_ITEMS = [
@@ -62,9 +62,9 @@ export default function ScannerModal() {
 
   const finderColorMap: Record<ScanStatus, string> = {
     idle: "rgba(255,255,255,0.85)",
-    loading: useColor("primary-light"),
+    loading: getColor("primary-light"),
     success: "rgba(255,255,255,0.85)",
-    error: useColor("error-foreground"),
+    error: getColor("error-foreground"),
   };
 
   const translateY = useSharedValue(SNAP_COLLAPSED);
@@ -208,7 +208,7 @@ export default function ScannerModal() {
           style={{ top: insets.top + 12 }}
           onPress={handleClose}
         >
-          <X size={20} color={useColor("primary-foreground")} />
+          <X size={20} color={getColor("primary-foreground")} />
         </Pressable>
         <Text className="text-white text-base text-center leading-6">
           Camera access is required to scan items.{"\n"}Please enable it in
@@ -219,7 +219,7 @@ export default function ScannerModal() {
   }
 
   const finderColor = finderColorMap[scanState.status];
-  const primaryLight = useColor("primary-light");
+  const primaryLight = getColor("primary-light");
 
   return (
     <View className="flex-1 bg-black">
@@ -290,7 +290,7 @@ export default function ScannerModal() {
         style={{ top: insets.top + 12 }}
         onPress={handleClose}
       >
-        <X size={20} color={useColor("primary-foreground")} />
+        <X size={20} color={getColor("primary-foreground")} />
       </Pressable>
 
       <ScannerStatusPill scanStatus={scanState.status} />
