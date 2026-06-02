@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import {
   View,
   Text,
@@ -74,6 +74,9 @@ export default function ActivitiesScreen() {
   const [loadingMore, setLoadingMore] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Synchronous lock: onEndReached can fire multiple times before the
+  // loadingMore state commits, which would append the same page twice.
+  const fetchingRef = useRef(false)
 
   const fetchPage = useCallback(
     async (
@@ -92,8 +95,13 @@ export default function ActivitiesScreen() {
           sort_by: sb,
           sort_dir: sd,
         })
+
         if (append) {
-          setMovements((prev) => [...prev, ...result.data])
+          setMovements((prev) => {
+            const seen = new Set(prev.map((m) => m.id))
+            const next = result.data.filter((m) => !seen.has(m.id))
+            return [...prev, ...next]
+          })
         } else {
           setMovements(result.data)
         }
@@ -117,14 +125,18 @@ export default function ActivitiesScreen() {
   }, [actionType, sortBy, sortDir, fetchPage])
 
   function handleLoadMore() {
-    if (loadingMore || loading || !hasMore || !!refreshing) return
+    if (fetchingRef.current || loadingMore || loading || !hasMore || !!refreshing)
+      return
+    fetchingRef.current = true
     setLoadingMore(true)
-    fetchPage(page + 1, actionType, sortBy, sortDir, true).finally(() =>
-      setLoadingMore(false),
-    )
+    fetchPage(page + 1, actionType, sortBy, sortDir, true).finally(() => {
+      fetchingRef.current = false
+      setLoadingMore(false)
+    })
   }
 
   function handleRefresh() {
+    fetchingRef.current = false
     setRefreshing(true)
     setMovements([])
     setHasMore(true)
