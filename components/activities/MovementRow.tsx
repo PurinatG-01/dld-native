@@ -8,7 +8,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated"
 import { MessageCircleWarning, ChevronDown } from "lucide-react-native"
-import { useColor } from "@/lib/useColor"
+import { getColor } from "@/lib/color"
 import { ACTION_META, formatMovementDate } from "./constants"
 import type { MovementRowProps, StockMovementLine } from "./types"
 
@@ -69,7 +69,7 @@ export const MovementRow = memo(function MovementRow({
         >
           <Icon
             size={18}
-            color={useColor(meta?.iconColorToken ?? "muted-foreground")}
+            color={getColor(meta?.iconColorToken ?? "muted-foreground")}
           />
         </View>
         <View className="flex-1 ml-3">
@@ -91,7 +91,7 @@ export const MovementRow = memo(function MovementRow({
           {movement.item_count} {movement.item_count === 1 ? "item" : "items"}
         </Text>
         <Animated.View style={chevronStyle}>
-          <ChevronDown size={18} color={useColor("muted-foreground")} />
+          <ChevronDown size={18} color={getColor("muted-foreground")} />
         </Animated.View>
       </Pressable>
 

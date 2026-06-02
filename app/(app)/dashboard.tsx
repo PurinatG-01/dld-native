@@ -14,7 +14,7 @@ import { StatCard } from "@/components/dashboard/StatCard";
 import { MovementRow } from "@/components/activities/MovementRow";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { listMovements, type StockMovement } from "@/lib/services/movements";
-import { useColor } from "@/lib/useColor";
+import { getColor } from "@/lib/color";
 
 const RECENT_LIMIT = 10;
 
@@ -69,7 +69,7 @@ export default function DashboardScreen() {
         onPress={() => router.push("/inbound")}
         className="flex-row items-center gap-3 bg-primary rounded-xl px-4 py-4 mb-6 active:opacity-70"
       >
-        <PackagePlus size={22} color={useColor("primary-foreground")} />
+        <PackagePlus size={22} color={getColor("primary-foreground")} />
         <View className="flex-1">
           <Text className="text-sm font-bold text-primary-foreground">
             Receive delivery
@@ -91,28 +91,28 @@ export default function DashboardScreen() {
           value="—"
           icon={Package}
           bgClassName="bg-primary"
-          iconColor={useColor("primary-foreground")}
+          iconColor={getColor("primary-foreground")}
         />
         <StatCard
           label="In Stock"
           value="—"
           icon={Activity}
           bgClassName="bg-emerald-500"
-          iconColor={useColor("primary-foreground")}
+          iconColor={getColor("primary-foreground")}
         />
         <StatCard
           label="Low Stock"
           value="—"
           icon={AlertCircle}
           bgClassName="bg-destructive"
-          iconColor={useColor("primary-foreground")}
+          iconColor={getColor("primary-foreground")}
         />
         <StatCard
           label="Expiring Soon"
           value="—"
           icon={TrendingUp}
           bgClassName="bg-amber-500"
-          iconColor={useColor("primary-foreground")}
+          iconColor={getColor("primary-foreground")}
         />
       </ScrollView>
 
@@ -126,7 +126,7 @@ export default function DashboardScreen() {
           className="flex-row items-center active:opacity-70"
         >
           <Text className="text-xs font-semibold text-primary">View all</Text>
-          <ChevronRight size={14} color={useColor("primary")} />
+          <ChevronRight size={14} color={getColor("primary")} />
         </Pressable>
       </View>
 
@@ -154,7 +154,7 @@ export default function DashboardScreen() {
           recent.map((m) => <MovementRow key={m.id} movement={m} />)
         ) : (
           <View className="p-12 items-center">
-            <Package size={36} color={useColor("placeholder")} />
+            <Package size={36} color={getColor("placeholder")} />
             <Text className="text-sm font-bold text-muted-foreground mt-3">
               No recent activity
             </Text>

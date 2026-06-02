@@ -6,7 +6,7 @@ import {
   SlidersHorizontal,
 } from "lucide-react-native";
 import type { LucideIcon } from "lucide-react-native";
-import type { ColorToken } from "@/lib/useColor";
+import type { ColorToken } from "@/lib/color";
 import type { ActionType } from "@/lib/services/movements";
 
 export type ActionMeta = {

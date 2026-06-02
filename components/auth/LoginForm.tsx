@@ -14,7 +14,7 @@ import { useRouter } from "expo-router";
 import { Stethoscope } from "lucide-react-native";
 import { signInWithEmail } from "@/lib/services/auth";
 import { FlashMessage } from "@/components/ui/FlashMessage";
-import { useColor } from "@/lib/useColor";
+import { getColor } from "@/lib/color";
 
 export function LoginForm() {
   const [email, setEmail] = useState("");
@@ -49,7 +49,7 @@ export function LoginForm() {
         <View className="w-full max-w-sm bg-card rounded-xl border border-border p-10 shadow-sm">
           <View className="flex-row items-center gap-3 mb-10">
             <View className="w-10 h-10 rounded-xl bg-primary items-center justify-center">
-              <Stethoscope size={20} color={useColor("primary-foreground")} />
+              <Stethoscope size={20} color={getColor("primary-foreground")} />
             </View>
             <View>
               <Text className="text-base font-bold text-card-foreground leading-tight">
@@ -76,7 +76,7 @@ export function LoginForm() {
           <TextInput
             className="border border-border rounded-lg px-3 py-3 text-sm text-foreground bg-background mb-4"
             placeholder="you@example.com"
-            placeholderTextColor={useColor("placeholder")}
+            placeholderTextColor={getColor("placeholder")}
             autoCapitalize="none"
             autoComplete="email"
             keyboardType="email-address"
@@ -91,7 +91,7 @@ export function LoginForm() {
           <TextInput
             className="border border-border rounded-lg px-3 py-3 text-sm text-foreground bg-background mb-6"
             placeholder="••••••••"
-            placeholderTextColor={useColor("placeholder")}
+            placeholderTextColor={getColor("placeholder")}
             autoComplete="current-password"
             secureTextEntry
             value={password}
@@ -105,7 +105,7 @@ export function LoginForm() {
             disabled={loading}
           >
             {loading ? (
-              <ActivityIndicator color={useColor("primary-foreground")} size="small" />
+              <ActivityIndicator color={getColor("primary-foreground")} size="small" />
             ) : (
               <Text className="text-primary-foreground font-semibold text-sm">
                 Sign in

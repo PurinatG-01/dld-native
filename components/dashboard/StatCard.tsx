@@ -1,6 +1,6 @@
 import { View, Text } from "react-native";
 import type { LucideIcon } from "lucide-react-native";
-import { useColor } from "@/lib/useColor";
+import { getColor } from "@/lib/color";
 
 interface StatCardProps {
   label: string;
@@ -17,7 +17,7 @@ export function StatCard({
   iconColor,
   bgClassName = "bg-primary",
 }: StatCardProps) {
-  const resolvedIconColor = iconColor ?? useColor("primary-foreground");
+  const resolvedIconColor = iconColor ?? getColor("primary-foreground");
   return (
     <View className="bg-card p-6 rounded-xl border border-border min-w-36 flex-1">
       <View

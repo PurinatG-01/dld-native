@@ -1,7 +1,7 @@
 import { memo, useCallback } from "react";
 import { View, Text, Pressable } from "react-native";
 import { Package, Trash2 } from "lucide-react-native";
-import { useColor } from "@/lib/useColor";
+import { getColor } from "@/lib/color";
 
 type Props = {
   lineKey: string;
@@ -43,7 +43,7 @@ export const LineRow = memo(function LineRow({
       className="flex-row items-center px-4 py-3 border-b border-border active:bg-muted/50"
     >
       <View className="w-9 h-9 rounded-xl bg-primary/10 items-center justify-center">
-        <Package size={18} color={useColor("primary")} />
+        <Package size={18} color={getColor("primary")} />
       </View>
       <View className="flex-1 ml-3">
         <Text
@@ -65,7 +65,7 @@ export const LineRow = memo(function LineRow({
         hitSlop={8}
         className="w-8 h-8 rounded-full bg-muted items-center justify-center active:opacity-70"
       >
-        <Trash2 size={15} color={useColor("muted-foreground")} />
+        <Trash2 size={15} color={getColor("muted-foreground")} />
       </Pressable>
     </Pressable>
   );

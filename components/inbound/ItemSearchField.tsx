@@ -7,7 +7,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Search, X } from "lucide-react-native";
-import { useColor } from "@/lib/useColor";
+import { getColor } from "@/lib/color";
 import { listItems, type InventoryItem } from "@/lib/services/inventory";
 
 const SEARCH_DEBOUNCE_MS = 500;
@@ -89,7 +89,7 @@ export function ItemSearchField({ value, onSelect, onClear }: Props) {
             onPress={onClear}
             className="w-7 h-7 rounded-full bg-muted items-center justify-center active:opacity-70"
           >
-            <X size={14} color={useColor("muted-foreground")} />
+            <X size={14} color={getColor("muted-foreground")} />
           </Pressable>
         </View>
       </View>
@@ -102,17 +102,17 @@ export function ItemSearchField({ value, onSelect, onClear }: Props) {
         Item
       </Text>
       <View className="flex-row items-center border border-border rounded-lg bg-background px-3">
-        <Search size={16} color={useColor("muted-foreground")} />
+        <Search size={16} color={getColor("muted-foreground")} />
         <TextInput
           className="flex-1 ml-2 text-sm text-foreground py-3"
           placeholder="Search items…"
-          placeholderTextColor={useColor("placeholder")}
+          placeholderTextColor={getColor("placeholder")}
           value={input}
           onChangeText={setInput}
           autoFocus
         />
         {loading ? (
-          <ActivityIndicator size="small" color={useColor("primary")} />
+          <ActivityIndicator size="small" color={getColor("primary")} />
         ) : null}
       </View>
 

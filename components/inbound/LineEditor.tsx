@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Plus, Minus, X } from "lucide-react-native";
-import { useColor } from "@/lib/useColor";
+import { getColor } from "@/lib/color";
 import { Select } from "@/components/ui/Select";
 import { ItemSearchField } from "./ItemSearchField";
 import { makeLineKey, isLineValid } from "@/lib/inbound-reducer";
@@ -124,7 +124,7 @@ export function LineEditor({
                 onPress={() => setQuantity((q) => Math.max(1, q - 1))}
                 className="w-10 h-10 rounded-full bg-muted items-center justify-center active:opacity-70"
               >
-                <Minus size={16} color={useColor("muted-foreground")} />
+                <Minus size={16} color={getColor("muted-foreground")} />
               </Pressable>
               <TextInput
                 className="w-20 text-center text-lg font-semibold text-foreground border border-border rounded-lg py-2"
@@ -139,7 +139,7 @@ export function LineEditor({
                 onPress={() => setQuantity((q) => q + 1)}
                 className="w-10 h-10 rounded-full bg-primary items-center justify-center active:opacity-70"
               >
-                <Plus size={16} color={useColor("primary-foreground")} />
+                <Plus size={16} color={getColor("primary-foreground")} />
               </Pressable>
             </View>
           </View>
@@ -163,7 +163,7 @@ export function LineEditor({
             <TextInput
               className="border border-border rounded-lg bg-card px-3 py-3 text-sm text-card-foreground"
               placeholder="e.g. LOT-2026-04"
-              placeholderTextColor={useColor("placeholder")}
+              placeholderTextColor={getColor("placeholder")}
               value={lot}
               onChangeText={setLot}
               autoCapitalize="characters"
@@ -183,7 +183,7 @@ export function LineEditor({
                 expiryValid ? "border-border" : "border-destructive"
               }`}
               placeholder="YYYY-MM-DD"
-              placeholderTextColor={useColor("placeholder")}
+              placeholderTextColor={getColor("placeholder")}
               value={expiry}
               onChangeText={setExpiry}
               keyboardType="numbers-and-punctuation"

@@ -9,7 +9,7 @@ import {
   Scissors,
 } from "lucide-react-native";
 import type { LucideIcon } from "lucide-react-native";
-import type { ColorToken } from "@/lib/useColor";
+import type { ColorToken } from "@/lib/color";
 
 export type CategoryMeta = {
   icon: LucideIcon;

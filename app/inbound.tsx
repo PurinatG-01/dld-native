@@ -3,7 +3,7 @@ import { View, Text, Pressable, Alert, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Plus } from "lucide-react-native";
-import { useColor } from "@/lib/useColor";
+import { getColor } from "@/lib/color";
 import { FlashMessage } from "@/components/ui/FlashMessage";
 import { SessionHeader } from "@/components/inbound/SessionHeader";
 import { SessionHeaderSkeleton } from "@/components/inbound/SessionHeaderSkeleton";
@@ -188,7 +188,7 @@ export default function InboundScreen() {
           disabled={!state.branchId}
           className="flex-row items-center justify-center gap-2 border border-border rounded-lg py-3 active:opacity-70 disabled:opacity-40"
         >
-          <Plus size={16} color={useColor("primary")} />
+          <Plus size={16} color={getColor("primary")} />
           <Text className="text-sm font-semibold text-primary">Add line</Text>
         </Pressable>
 
@@ -198,7 +198,7 @@ export default function InboundScreen() {
           className="flex-row items-center justify-center gap-2 bg-primary rounded-lg py-3.5 active:opacity-70 disabled:opacity-40"
         >
           {submitting ? (
-            <ActivityIndicator size="small" color={useColor("primary-foreground")} />
+            <ActivityIndicator size="small" color={getColor("primary-foreground")} />
           ) : null}
           <Text className="text-sm font-bold text-primary-foreground">
             {submitting ? "Submitting…" : "Submit delivery"}

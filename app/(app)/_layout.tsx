@@ -4,7 +4,7 @@ import { Redirect } from "expo-router"
 import { NativeTabs } from "expo-router/unstable-native-tabs"
 import type { Session } from "@supabase/supabase-js"
 import { supabase } from "@/lib/supabase/client"
-import { useColor } from "@/lib/useColor"
+import { getColor } from "@/lib/color"
 
 export default function AppLayout() {
   const [session, setSession] = useState<Session | null | undefined>(undefined)
@@ -33,7 +33,7 @@ export default function AppLayout() {
   }
 
   return (
-    <NativeTabs tintColor={useColor("primary")}>
+    <NativeTabs tintColor={getColor("primary")}>
       <NativeTabs.Trigger
         name="dashboard"
         options={{ title: "Dashboard", icon: { sf: "house" } }}

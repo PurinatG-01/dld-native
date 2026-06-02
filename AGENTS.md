@@ -109,9 +109,9 @@ All tokens are in `tailwind.config.js` — that is the single source of truth. N
 Two ways to use a token:
 
 - `className="bg-primary"` — NativeWind handles it
-- `useColor("primary")` from `@/lib/useColor` — for JS-level props where NativeWind can't reach
+- `getColor("primary")` from `@/lib/color` — for JS-level props where NativeWind can't reach
 
-Use `useColor` for: icon `color=` props (lucide ignores `style.color`), `placeholderTextColor`, `tintColor`, Reanimated shadow colors.
+Use `getColor` for: icon `color=` props (lucide ignores `style.color`), `placeholderTextColor`, `tintColor`, Reanimated shadow colors. It is a plain lookup, not a hook — call it anywhere (conditionals, callbacks).
 
 ---
 

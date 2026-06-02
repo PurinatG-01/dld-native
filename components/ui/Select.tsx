@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { View, Text, Pressable, Modal, FlatList } from "react-native";
 import { ChevronDown, Check, X } from "lucide-react-native";
-import { useColor } from "@/lib/useColor";
+import { getColor } from "@/lib/color";
 
 export type SelectOption = { id: string; name: string };
 
@@ -53,7 +53,7 @@ export function Select({
         >
           {selected ? selected.name : placeholder}
         </Text>
-        <ChevronDown size={16} color={useColor("muted-foreground")} />
+        <ChevronDown size={16} color={getColor("muted-foreground")} />
       </Pressable>
 
       <Modal
@@ -79,7 +79,7 @@ export function Select({
                 onPress={() => setOpen(false)}
                 className="w-8 h-8 rounded-full bg-muted items-center justify-center active:opacity-70"
               >
-                <X size={16} color={useColor("muted-foreground")} />
+                <X size={16} color={getColor("muted-foreground")} />
               </Pressable>
             </View>
             <FlatList
@@ -107,7 +107,7 @@ export function Select({
                       {item.name}
                     </Text>
                     {active ? (
-                      <Check size={16} color={useColor("primary")} />
+                      <Check size={16} color={getColor("primary")} />
                     ) : null}
                   </Pressable>
                 );
