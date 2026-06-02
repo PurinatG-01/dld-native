@@ -1,74 +1,91 @@
-// MOCK SERVICE — Story 1B (RN form only).
-// Ref-data reads (suppliers/branches/locations) and the receive_inbound RPC are
-// stubbed here so the form works end-to-end without Story 1A. Real read paths +
-// RPC wiring are tracked as a side-story in the Inbound EPIC (Notion).
-// IDs are uuid in the live DB (the EPIC's `bigint` note is stale).
+import { supabase } from "@/lib/supabase/client";
 
 export type RefOption = { id: string; name: string };
+
+export type InboundRefData = {
+  suppliers: RefOption[];
+  branches: RefOption[];
+  /** Locations for the requested branch (or the caller's branch by default). */
+  locations: RefOption[];
+  /** The caller's own branch — the only branch they may write to. */
+  branch_id: string | null;
+};
 
 export type InboundPayloadLine = {
   item_id: string;
   quantity: number;
   lot_number?: string | null;
   expiry_date?: string | null;
-  branch_location_id: string;
+  /** Optional per-line override; defaults to the session location in the RPC. */
+  location_id?: string | null;
 };
 
 export type ReceiveInboundPayload = {
-  supplier_id: string;
+  supplier_id: string | null;
   branch_id: string;
+  /** Session-level receiving location (inbound_session.location_id). Required. */
+  location_id: string;
   lines: InboundPayloadLine[];
 };
 
-function delay<T>(value: T, ms = 400): Promise<T> {
-  return new Promise((resolve) => setTimeout(() => resolve(value), ms));
+async function authHeader(): Promise<string> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session) throw new Error("Not authenticated");
+  return `Bearer ${session.access_token}`;
 }
 
-const MOCK_SUPPLIERS: RefOption[] = [
-  { id: "sup-1", name: "DKSH (Thailand)" },
-  { id: "sup-2", name: "Zuellig Pharma" },
-  { id: "sup-3", name: "Henry Schein" },
-];
+/**
+ * Reference data for the Receive-delivery form. Pass `branchId` to load that
+ * branch's locations; omit to use the caller's branch.
+ */
+export async function getInboundRefData(
+  branchId?: string
+): Promise<InboundRefData> {
+  const url = new URL(
+    "/functions/v1/inbound-refdata",
+    process.env.EXPO_PUBLIC_SUPABASE_URL
+  );
+  if (branchId) url.searchParams.set("branch_id", branchId);
 
-const MOCK_BRANCHES: RefOption[] = [
-  { id: "br-1", name: "Sukhumvit Clinic" },
-  { id: "br-2", name: "Chiang Mai Clinic" },
-];
+  const res = await fetch(url.toString(), {
+    headers: {
+      Authorization: await authHeader(),
+      "Content-Type": "application/json",
+    },
+  });
 
-const MOCK_LOCATIONS: Record<string, RefOption[]> = {
-  "br-1": [
-    { id: "loc-1", name: "Main Store Room" },
-    { id: "loc-2", name: "Refrigerator A" },
-    { id: "loc-3", name: "Chairside Cabinet 1" },
-  ],
-  "br-2": [
-    { id: "loc-4", name: "Stock Room" },
-    { id: "loc-5", name: "Refrigerator" },
-  ],
-};
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(err.error ?? "inbound-refdata request failed");
+  }
 
-export function listSuppliers(): Promise<RefOption[]> {
-  return delay(MOCK_SUPPLIERS);
+  return res.json();
 }
 
-export function listBranches(): Promise<RefOption[]> {
-  return delay(MOCK_BRANCHES);
-}
-
-export function listLocations(branchId: string): Promise<RefOption[]> {
-  return delay(MOCK_LOCATIONS[branchId] ?? []);
-}
-
-/** Stubbed receive_inbound RPC. Resolves with a fake session id, or throws. */
+/** Records an inbound delivery via the receive-inbound edge function. */
 export async function receiveInbound(
   payload: ReceiveInboundPayload
 ): Promise<{ inbound_session_id: string }> {
-  await delay(null, 800);
-  if (payload.lines.length === 0) {
-    throw new Error("Cannot submit an inbound session with no lines.");
+  const url = new URL(
+    "/functions/v1/receive-inbound",
+    process.env.EXPO_PUBLIC_SUPABASE_URL
+  );
+
+  const res = await fetch(url.toString(), {
+    method: "POST",
+    headers: {
+      Authorization: await authHeader(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(err.error ?? "receive-inbound request failed");
   }
-  if (payload.lines.some((l) => !Number.isInteger(l.quantity) || l.quantity <= 0)) {
-    throw new Error("All line quantities must be positive integers.");
-  }
-  return { inbound_session_id: `mock-session-${Date.now()}` };
+
+  return res.json();
 }

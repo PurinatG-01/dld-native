@@ -57,6 +57,7 @@ Each epic has (or will have) a living doc under `docs/` describing its **current
 | Epic      | Status         | Doc                                            |
 | --------- | -------------- | ---------------------------------------------- |
 | Scanner   | 🟡 In progress | [`docs/scanner-epic.md`](docs/scanner-epic.md) |
+| Inbound   | 🟡 In progress | [`docs/inbound-epic.md`](docs/inbound-epic.md) |
 | Inventory | ✅ Done        | _Not yet written — see Project Status + code_  |
 | Auth      | ✅ Done        | _Not yet written — see Project Status + code_  |
 | Account   | ✅ Done        | _Not yet written — see Project Status + code_  |
@@ -67,6 +68,12 @@ Each epic has (or will have) a living doc under `docs/` describing its **current
 Barcode-scanner feature: camera modal, lookup against live inventory, scanned-items list with quantities. The doc covers the `useReducer` state machine, scan lifecycle (real + dev simulate), swipeable summary sheet, components, and what's done vs not.
 
 → [`docs/scanner-epic.md`](docs/scanner-epic.md)
+
+### Inbound
+
+Form-first "Receive delivery" flow (Story 1B): select supplier + branch + default location, add/edit/remove item lines (search, qty, lot, expiry, location), submit via the `receive_inbound` RPC. The doc covers the `useReducer` state machine, root-level routing, the mocked service layer, and done-vs-not.
+
+→ [`docs/inbound-epic.md`](docs/inbound-epic.md)
 
 > Adding an epic doc for another area? Add its row to the table above and a matching subsection here. Epic docs describe **current logic only** — historical design notes and plans live in Notion (Dental Logistics → Tech) and git history, not in this repo.
 
@@ -115,6 +122,8 @@ Use `useColor` for: icon `color=` props (lucide ignores `style.color`), `placeho
 ### Services
 
 All backend calls live in `lib/services/`. See `lib/services/inventory.ts` for the pattern: get session → build URL to edge function → fetch with Bearer token → throw on error. Never inline fetch calls in components.
+
+**Always go through an edge function.** Services must call `/functions/v1/<fn>` — **never** call `supabase.rpc(...)` or `supabase.from(...)` table reads/writes directly from the client. The Supabase JS client is used only for auth/session (`supabase.auth.*`). RPCs (e.g. `receive_inbound`) are invoked from inside an edge function, which forwards the caller's JWT so RLS / `auth.uid()` checks still apply. Edge functions live in the separate `dld-spb` repo (`supabase/functions/<fn>/index.ts`) and are deployed from there. Inbound uses `inbound-refdata` (reads) + `receive-inbound` (write).
 
 ### Navigation
 

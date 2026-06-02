@@ -14,7 +14,12 @@ export default function RootLayout() {
           />
           <Stack.Screen
             name="inbound"
-            options={{ headerShown: true, title: "Receive delivery" }}
+            options={{
+              headerShown: true,
+              title: "Receive delivery",
+              headerBackButtonDisplayMode: "minimal",
+              headerBackTitle: "",
+            }}
           />
         </Stack>
       </SafeAreaProvider>

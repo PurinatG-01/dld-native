@@ -104,11 +104,16 @@ describe("canSubmit", () => {
     ...initialInboundState,
     supplierId: "sup-1",
     branchId: "br-1",
+    defaultLocationId: "loc-1",
     lines: [makeLine()],
   };
 
-  it("true when supplier, branch, and ≥1 valid line present", () => {
+  it("true when supplier, branch, location, and ≥1 valid line present", () => {
     expect(canSubmit(ready)).toBe(true);
+  });
+
+  it("false without a session default location", () => {
+    expect(canSubmit({ ...ready, defaultLocationId: null })).toBe(false);
   });
 
   it("false with zero lines", () => {

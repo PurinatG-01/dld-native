@@ -6,6 +6,8 @@ import { Plus } from "lucide-react-native";
 import { useColor } from "@/lib/useColor";
 import { FlashMessage } from "@/components/ui/FlashMessage";
 import { SessionHeader } from "@/components/inbound/SessionHeader";
+import { SessionHeaderSkeleton } from "@/components/inbound/SessionHeaderSkeleton";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { LineList } from "@/components/inbound/LineList";
 import { LineEditor } from "@/components/inbound/LineEditor";
 import {
@@ -14,9 +16,7 @@ import {
   canSubmit,
 } from "@/lib/inbound-reducer";
 import {
-  listSuppliers,
-  listBranches,
-  listLocations,
+  getInboundRefData,
   receiveInbound,
   type RefOption,
 } from "@/lib/services/inbound";
@@ -30,25 +30,43 @@ export default function InboundScreen() {
   const [suppliers, setSuppliers] = useState<RefOption[]>([]);
   const [branches, setBranches] = useState<RefOption[]>([]);
   const [locations, setLocations] = useState<RefOption[]>([]);
+  const [loading, setLoading] = useState(true);
 
   // Editor: null = closed; { line } open (line null = add).
   const [editor, setEditor] = useState<{ line: InboundLine | null } | null>(
     null
   );
 
+  // Initial load: suppliers + branches + caller's branch (locations come from
+  // the branch effect once the branch is set).
   useEffect(() => {
-    listSuppliers().then(setSuppliers).catch(() => setSuppliers([]));
-    listBranches().then(setBranches).catch(() => setBranches([]));
+    let cancelled = false;
+    getInboundRefData()
+      .then((ref) => {
+        if (cancelled) return;
+        setSuppliers(ref.suppliers);
+        setBranches(ref.branches);
+        // Caller may only write to their own branch — pre-select it.
+        if (ref.branch_id) {
+          dispatch({ type: "SET_BRANCH", branchId: ref.branch_id });
+        }
+      })
+      .catch(() => {})
+      .finally(() => !cancelled && setLoading(false));
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
+  // Load locations whenever the selected branch changes.
   useEffect(() => {
     if (!state.branchId) {
       setLocations([]);
       return;
     }
     let cancelled = false;
-    listLocations(state.branchId)
-      .then((l) => !cancelled && setLocations(l))
+    getInboundRefData(state.branchId)
+      .then((ref) => !cancelled && setLocations(ref.locations))
       .catch(() => !cancelled && setLocations([]));
     return () => {
       cancelled = true;
@@ -85,14 +103,15 @@ export default function InboundScreen() {
     dispatch({ type: "SUBMIT_START" });
     try {
       const result = await receiveInbound({
-        supplier_id: state.supplierId!,
+        supplier_id: state.supplierId,
         branch_id: state.branchId!,
+        location_id: state.defaultLocationId!,
         lines: state.lines.map((l) => ({
           item_id: l.item.id,
           quantity: l.quantity,
           lot_number: l.lot_number,
           expiry_date: l.expiry_date,
-          branch_location_id: l.location_id!,
+          location_id: l.location_id,
         })),
       });
       Alert.alert(
@@ -118,6 +137,19 @@ export default function InboundScreen() {
 
   const submitting = state.submit === "submitting";
   const submittable = canSubmit(state);
+
+  // Wait for the first inbound-refdata load before showing the form.
+  if (loading) {
+    return (
+      <View className="flex-1 bg-background">
+        <SessionHeaderSkeleton />
+        <View className="px-5 pt-4 gap-3">
+          <Skeleton className="h-14 w-full rounded-lg" />
+          <Skeleton className="h-14 w-full rounded-lg" />
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1 bg-background">
