@@ -99,7 +99,7 @@ const InventoryRow = memo(function InventoryRow({
   return (
     <Pressable
       onPress={handlePress}
-      className="flex-row items-center px-4 py-3 border-b border-border active:bg-muted/50"
+      className="flex-row items-center px-4 py-3 border-b border-border bg-card active:bg-muted/50"
     >
       <CategoryIcon category={category} />
       <View className="flex-1 ml-3">

@@ -43,7 +43,8 @@ _As of 2026-05-30._
 | Inventory list         | ✅ Done        | Infinite scroll · pull-to-refresh · 500ms debounce search · category filter · sort · live API                                                           |
 | Item detail            | ✅ Done        | Item metadata + stock batch list · live API                                                                                                             |
 | Scanner — camera modal | 🟡 In progress | Real barcode scan + lookup live · 4-state machine · swipeable summary sheet · quantity controls · dev-only simulate-scan button · submit flow not built |
-| Dashboard              | 🟡 Stub        | Tab present · placeholder stat cards, no live data                                                                                                      |
+| Activities             | ✅ Done        | "Activities" tab + Dashboard "Recent activity" · live `list-movements` edge fn · accordion rows expand to item lines · action-type filter · date/type sort · infinite scroll |
+| Dashboard              | 🟡 Stub        | Tab present · placeholder stat cards · "Recent activity" list now live (10 latest movements)                                                            |
 | Account                | ✅ Done        | Profile card · settings row (inert) · confirm-dialog sign-out                                                                                           |
 | BE — `create-movement` | 🔴 Not started | Write endpoint for stock_movement — needed for scanner submit flow                                                                                      |
 | RLS                    | 🔴 Stub only   | All policies open (`qual = true`), branch-scoping not enforced                                                                                          |
@@ -58,6 +59,7 @@ Each epic has (or will have) a living doc under `docs/` describing its **current
 | --------- | -------------- | ---------------------------------------------- |
 | Scanner   | 🟡 In progress | [`docs/scanner-epic.md`](docs/scanner-epic.md) |
 | Inbound   | 🟡 In progress | [`docs/inbound-epic.md`](docs/inbound-epic.md) |
+| Activities | ✅ Done     | [`docs/activities-epic.md`](docs/activities-epic.md) |
 | Inventory | ✅ Done        | _Not yet written — see Project Status + code_  |
 | Auth      | ✅ Done        | _Not yet written — see Project Status + code_  |
 | Account   | ✅ Done        | _Not yet written — see Project Status + code_  |
@@ -74,6 +76,12 @@ Barcode-scanner feature: camera modal, lookup against live inventory, scanned-it
 Form-first "Receive delivery" flow (Story 1B): select supplier + branch + default location, add/edit/remove item lines (search, qty, lot, expiry, location), submit via the `receive_inbound` RPC. The doc covers the `useReducer` state machine, root-level routing, the mocked service layer, and done-vs-not.
 
 → [`docs/inbound-epic.md`](docs/inbound-epic.md)
+
+### Activities
+
+Read-only stock-movement history: an "Activities" tab and a Dashboard "Recent activity" preview, both backed by the `list-movements` edge function. Each movement is an accordion row that expands to show its `stock_movement_item` lines (item · lot · qty · location). The doc covers the edge function contract, the accordion animation rules, and the list screen.
+
+→ [`docs/activities-epic.md`](docs/activities-epic.md)
 
 > Adding an epic doc for another area? Add its row to the table above and a matching subsection here. Epic docs describe **current logic only** — historical design notes and plans live in Notion (Dental Logistics → Tech) and git history, not in this repo.
 
