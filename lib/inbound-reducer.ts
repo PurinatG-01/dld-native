@@ -79,6 +79,7 @@ export function canSubmit(state: InboundState): boolean {
     state.submit !== "submitting" &&
     !!state.supplierId &&
     !!state.branchId &&
+    !!state.defaultLocationId &&
     state.lines.length > 0 &&
     state.lines.every(isLineValid)
   );
