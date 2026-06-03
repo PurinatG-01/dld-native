@@ -1,6 +1,6 @@
 import { memo, useCallback } from "react";
 import { View, Text, Pressable } from "react-native";
-import { Package, Trash2 } from "lucide-react-native";
+import { Package, Trash2, AlertTriangle } from "lucide-react-native";
 import { getColor } from "@/lib/color";
 
 type Props = {
@@ -11,6 +11,8 @@ type Props = {
   lot: string | null;
   expiry: string | null;
   locationName: string | null;
+  barcode?: string | null;
+  isError?: boolean;
   onEdit: (key: string) => void;
   onRemove: (key: string) => void;
 };
@@ -23,6 +25,8 @@ export const LineRow = memo(function LineRow({
   lot,
   expiry,
   locationName,
+  barcode,
+  isError = false,
   onEdit,
   onRemove,
 }: Props) {
@@ -40,10 +44,20 @@ export const LineRow = memo(function LineRow({
   return (
     <Pressable
       onPress={handleEdit}
-      className="flex-row items-center px-4 py-3 border-b border-border active:bg-muted/50"
+      className={`flex-row items-center px-4 py-3 border-b border-border active:bg-muted/50${
+        isError ? " border-l-2 border-l-destructive bg-destructive/5" : ""
+      }`}
     >
-      <View className="w-9 h-9 rounded-xl bg-primary/10 items-center justify-center">
-        <Package size={18} color={getColor("primary")} />
+      <View
+        className={`w-9 h-9 rounded-xl items-center justify-center ${
+          isError ? "bg-destructive/10" : "bg-primary/10"
+        }`}
+      >
+        {isError ? (
+          <AlertTriangle size={18} color={getColor("destructive")} />
+        ) : (
+          <Package size={18} color={getColor("primary")} />
+        )}
       </View>
       <View className="flex-1 ml-3">
         <Text
@@ -52,9 +66,15 @@ export const LineRow = memo(function LineRow({
         >
           {name}
         </Text>
-        <Text className="text-xs text-muted-foreground mt-0.5" numberOfLines={1}>
-          {meta.length > 0 ? meta : "No location set"}
-        </Text>
+        {isError ? (
+          <Text className="text-xs text-destructive mt-0.5" numberOfLines={1}>
+            Couldn’t identify{barcode ? ` ${barcode}` : ""} · tap to fix
+          </Text>
+        ) : (
+          <Text className="text-xs text-muted-foreground mt-0.5" numberOfLines={1}>
+            {meta.length > 0 ? meta : "No location set"}
+          </Text>
+        )}
       </View>
       <Text className="text-sm font-semibold text-card-foreground mx-3">
         {quantity}

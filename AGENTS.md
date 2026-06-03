@@ -10,6 +10,7 @@ React Native + Expo inventory management app for Thai dental clinics. **Read thi
 - [Styling Rules](#styling-rules)
 - [React Native Rules](#react-native-rules)
 - [Project Conventions](#project-conventions)
+- [Known Risks / Tech Debt](#known-risks--tech-debt)
 - [Testing](#testing)
 
 ---
@@ -34,17 +35,18 @@ React Native + Expo inventory management app for Thai dental clinics. **Read thi
 
 ## Project Status
 
-_As of 2026-05-30._
+_As of 2026-06-03._
 
 | Area                   | Status         | Note                                                                                                                                                    |
 | ---------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | App shell              | ✅ Done        | Native UITabBar (iPhone) + sidebar (iPad/Mac) · Expo Router v6 · portrait lock on iPhone                                                                |
-| Auth — login           | ✅ Done        | Supabase email/password · redirects to dashboard                                                                                                        |
+| Auth — login           | ✅ Done        | Supabase email/password · redirects to dashboard on success · route guard in `(app)` layout redirects unauth users to `/auth/login`                      |
 | Inventory list         | ✅ Done        | Infinite scroll · pull-to-refresh · 500ms debounce search · category filter · sort · live API                                                           |
 | Item detail            | ✅ Done        | Item metadata + stock batch list · live API                                                                                                             |
 | Scanner — camera modal | 🟡 In progress | Real barcode scan + lookup live · 4-state machine · swipeable summary sheet · quantity controls · dev-only simulate-scan button · submit flow not built |
+| Inbound — receive      | ✅ Wired       | "Receive delivery" form · supplier/branch/location + line editor · live `inbound-refdata` (reads) + `receive-inbound` (write, `receive_inbound` RPC)    |
 | Activities             | ✅ Done        | "Activities" tab + Dashboard "Recent activity" · live `list-movements` edge fn · accordion rows expand to item lines · action-type filter · date/type sort · infinite scroll |
-| Dashboard              | 🟡 Stub        | Tab present · placeholder stat cards · "Recent activity" list now live (10 latest movements)                                                            |
+| Dashboard              | 🟡 Stub        | Tab present · placeholder stat cards (show `—`) · "Recent activity" list live (10 latest movements)                                                     |
 | Account                | ✅ Done        | Profile card · settings row (inert) · confirm-dialog sign-out                                                                                           |
 | BE — `create-movement` | 🔴 Not started | Write endpoint for stock_movement — needed for scanner submit flow                                                                                      |
 | RLS                    | 🔴 Stub only   | All policies open (`qual = true`), branch-scoping not enforced                                                                                          |
@@ -58,12 +60,12 @@ Each epic has (or will have) a living doc under `docs/` describing its **current
 | Epic      | Status         | Doc                                            |
 | --------- | -------------- | ---------------------------------------------- |
 | Scanner   | 🟡 In progress | [`docs/scanner-epic.md`](docs/scanner-epic.md) |
-| Inbound   | 🟡 In progress | [`docs/inbound-epic.md`](docs/inbound-epic.md) |
+| Inbound   | ✅ Wired       | [`docs/inbound-epic.md`](docs/inbound-epic.md) |
 | Activities | ✅ Done     | [`docs/activities-epic.md`](docs/activities-epic.md) |
-| Inventory | ✅ Done        | _Not yet written — see Project Status + code_  |
-| Auth      | ✅ Done        | _Not yet written — see Project Status + code_  |
-| Account   | ✅ Done        | _Not yet written — see Project Status + code_  |
-| Dashboard | 🟡 Stub        | _Not yet written_                              |
+| Inventory | ✅ Done        | [`docs/inventory-epic.md`](docs/inventory-epic.md) |
+| Auth      | ✅ Done        | [`docs/auth-epic.md`](docs/auth-epic.md)       |
+| Account   | ✅ Done        | [`docs/account-epic.md`](docs/account-epic.md) |
+| Dashboard | 🟡 Stub        | [`docs/dashboard-epic.md`](docs/dashboard-epic.md) |
 
 ### Scanner
 
@@ -82,6 +84,30 @@ Form-first "Receive delivery" flow (Story 1B): select supplier + branch + defaul
 Read-only stock-movement history: an "Activities" tab and a Dashboard "Recent activity" preview, both backed by the `list-movements` edge function. Each movement is an accordion row that expands to show its `stock_movement_item` lines (item · lot · qty · location). The doc covers the edge function contract, the accordion animation rules, and the list screen.
 
 → [`docs/activities-epic.md`](docs/activities-epic.md)
+
+### Inventory
+
+Catalog read surface: list (infinite scroll, 500ms debounce search, category filter, sort) and item detail (metadata + per-batch stock). Backed by the `list-items` (list + barcode lookup) and `item-stock` edge functions. Read-only — no item create/edit.
+
+→ [`docs/inventory-epic.md`](docs/inventory-epic.md)
+
+### Auth
+
+Email/password sign-in via Supabase Auth; session persisted (SecureStore) and reused as the Bearer token by every service. The `(app)` layout gates on a session check, redirecting unauthenticated users to `/auth/login`. The doc covers the session lifecycle and the current gap (no sign-up).
+
+→ [`docs/auth-epic.md`](docs/auth-epic.md)
+
+### Account
+
+Account tab: profile card (name/email from `getUserProfile`), inert Settings row, confirm-dialog sign-out. The doc also flags the `user.ts` direct-table-read convention violation.
+
+→ [`docs/account-epic.md`](docs/account-epic.md)
+
+### Dashboard
+
+Post-login landing screen: "Receive delivery" CTA, four placeholder stat cards (`—`), and a live 10-item "Recent activity" preview reusing `MovementRow`. The doc covers what's live vs stubbed.
+
+→ [`docs/dashboard-epic.md`](docs/dashboard-epic.md)
 
 > Adding an epic doc for another area? Add its row to the table above and a matching subsection here. Epic docs describe **current logic only** — historical design notes and plans live in Notion (Dental Logistics → Tech) and git history, not in this repo.
 
@@ -148,6 +174,29 @@ Feature components live under `components/<feature>/` with `types.ts` + `constan
 ### Reanimated
 
 Animated styles must be returned from `useAnimatedStyle` — never derive them inline in the component body.
+
+---
+
+## Known Risks / Tech Debt
+
+_Snapshot from the 2026-06-03 audit. Run the [`audit` skill](.claude/skills/audit/SKILL.md) to regenerate. Severity: 🔴 high · 🟡 medium · 🔵 low._
+
+### Convention violations
+
+- 🟡 `lib/services/user.ts:14` — `getUserProfile` does a direct `supabase.from("user").select(...)` table read, breaking the "always go through an edge function — never `supabase.from`/`.rpc` in the client" rule. Fix: add a `get-user-profile` edge function in `dld-spb` and call it like the other services. The result is also `data as UserProfile` with no runtime validation (`user.ts:21`).
+
+### Security
+
+- 🔴 **RLS is stub-only** — all policies open (`qual = true`), branch-scoping not enforced server-side. Any authenticated user can read/write across branches. Backend work in `dld-spb`; client branch params are not a security boundary.
+- 🟡 **Backend error leakage** — services surface raw backend `error` / `res.statusText` straight to `Alert`/UI (`lib/services/inbound.ts`, `inventory.ts`, `movements.ts`). Edge functions should return sanitized messages (no SQL / stack / internal names).
+
+### Hygiene
+
+- 🔵 Two `TODO` markers track known pending work: `lib/services/user.ts:11` (move the direct db read to an edge fn — the convention violation above) and `components/scanner/ScannerSheet.tsx:101` (scanner submit flow, not yet built).
+
+### What's clean
+
+NativeWind-only styling (no stray hex, no stray `StyleSheet.create`), `Pressable` everywhere, `FlatList` for dynamic lists, transform/opacity-only animations, `useReducer` discriminated-union state machines, services follow the session→URL→Bearer→throw pattern (except `user.ts`), session tokens persisted via a chunked `expo-secure-store` adapter, tests mirror `lib/` under `__tests__/`.
 
 ---
 

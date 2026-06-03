@@ -1,9 +1,10 @@
 import { useReducer, useEffect, useState, useCallback } from "react";
 import { View, Text, Pressable, Alert, ActivityIndicator } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Plus } from "lucide-react-native";
+import { Plus, ScanLine } from "lucide-react-native";
 import { getColor } from "@/lib/color";
+import { markModalOpened, consumeScanBatchResult } from "@/lib/scanner-state";
 import { FlashMessage } from "@/components/ui/FlashMessage";
 import { SessionHeader } from "@/components/inbound/SessionHeader";
 import { SessionHeaderSkeleton } from "@/components/inbound/SessionHeaderSkeleton";
@@ -31,6 +32,9 @@ export default function InboundScreen() {
   const [branches, setBranches] = useState<RefOption[]>([]);
   const [locations, setLocations] = useState<RefOption[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  // Bumped to re-run the initial load on retry.
+  const [reloadKey, setReloadKey] = useState(0);
 
   // Editor: null = closed; { line } open (line null = add).
   const [editor, setEditor] = useState<{ line: InboundLine | null } | null>(
@@ -41,6 +45,8 @@ export default function InboundScreen() {
   // the branch effect once the branch is set).
   useEffect(() => {
     let cancelled = false;
+    setLoading(true);
+    setLoadError(null);
     getInboundRefData()
       .then((ref) => {
         if (cancelled) return;
@@ -51,12 +57,17 @@ export default function InboundScreen() {
           dispatch({ type: "SET_BRANCH", branchId: ref.branch_id });
         }
       })
-      .catch(() => {})
+      .catch((e) => {
+        if (cancelled) return;
+        setLoadError(
+          e instanceof Error ? e.message : "Failed to load form data."
+        );
+      })
       .finally(() => !cancelled && setLoading(false));
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [reloadKey]);
 
   // Load locations whenever the selected branch changes.
   useEffect(() => {
@@ -98,6 +109,22 @@ export default function InboundScreen() {
     dispatch({ type: "REMOVE_LINE", key });
   }, []);
 
+  // Open the scanner in inbound batch mode (pushed over this screen).
+  const handleScan = useCallback(() => {
+    markModalOpened();
+    router.push({ pathname: "/scanner-modal", params: { mode: "inbound" } });
+  }, [router]);
+
+  // Pull in any scanned batch when this screen regains focus.
+  useFocusEffect(
+    useCallback(() => {
+      const batch = consumeScanBatchResult();
+      if (batch && batch.length > 0) {
+        dispatch({ type: "ADD_SCANNED_LINES", lines: batch });
+      }
+    }, [])
+  );
+
   const handleSubmit = useCallback(async () => {
     if (!canSubmit(state)) return;
     dispatch({ type: "SUBMIT_START" });
@@ -106,8 +133,9 @@ export default function InboundScreen() {
         supplier_id: state.supplierId,
         branch_id: state.branchId!,
         location_id: state.defaultLocationId!,
+        // canSubmit guarantees every line is resolved (item present).
         lines: state.lines.map((l) => ({
-          item_id: l.item.id,
+          item_id: l.item!.id,
           quantity: l.quantity,
           lot_number: l.lot_number,
           expiry_date: l.expiry_date,
@@ -137,6 +165,7 @@ export default function InboundScreen() {
 
   const submitting = state.submit === "submitting";
   const submittable = canSubmit(state);
+  const errorCount = state.lines.filter((l) => l.status === "error").length;
 
   // Wait for the first inbound-refdata load before showing the form.
   if (loading) {
@@ -147,6 +176,22 @@ export default function InboundScreen() {
           <Skeleton className="h-14 w-full rounded-lg" />
           <Skeleton className="h-14 w-full rounded-lg" />
         </View>
+      </View>
+    );
+  }
+
+  // Initial load failed — surface the error with a retry instead of an
+  // empty form the user can't fill.
+  if (loadError) {
+    return (
+      <View className="flex-1 bg-background px-5 pt-4 gap-3">
+        <FlashMessage message={loadError} variant="error" />
+        <Pressable
+          onPress={() => setReloadKey((k) => k + 1)}
+          className="flex-row items-center justify-center gap-2 border border-border rounded-lg py-3 active:opacity-70"
+        >
+          <Text className="text-sm font-semibold text-primary">Retry</Text>
+        </Pressable>
       </View>
     );
   }
@@ -183,14 +228,31 @@ export default function InboundScreen() {
           <FlashMessage message={state.errorMsg} variant="error" />
         ) : null}
 
-        <Pressable
-          onPress={() => setEditor({ line: null })}
-          disabled={!state.branchId}
-          className="flex-row items-center justify-center gap-2 border border-border rounded-lg py-3 active:opacity-70 disabled:opacity-40"
-        >
-          <Plus size={16} color={getColor("primary")} />
-          <Text className="text-sm font-semibold text-primary">Add line</Text>
-        </Pressable>
+        {errorCount > 0 ? (
+          <Text className="text-xs text-destructive text-center">
+            {errorCount} {errorCount === 1 ? "item needs" : "items need"} attention before submitting.
+          </Text>
+        ) : null}
+
+        <View className="flex-row gap-3">
+          <Pressable
+            onPress={() => setEditor({ line: null })}
+            disabled={!state.branchId}
+            className="flex-1 flex-row items-center justify-center gap-2 border border-border rounded-lg py-3 active:opacity-70 disabled:opacity-40"
+          >
+            <Plus size={16} color={getColor("primary")} />
+            <Text className="text-sm font-semibold text-primary">Add line</Text>
+          </Pressable>
+
+          <Pressable
+            onPress={handleScan}
+            disabled={!state.branchId}
+            className="flex-1 flex-row items-center justify-center gap-2 border border-border rounded-lg py-3 active:opacity-70 disabled:opacity-40"
+          >
+            <ScanLine size={16} color={getColor("primary")} />
+            <Text className="text-sm font-semibold text-primary">Scan items</Text>
+          </Pressable>
+        </View>
 
         <Pressable
           onPress={handleSubmit}
