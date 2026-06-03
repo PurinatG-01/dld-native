@@ -192,7 +192,7 @@ _Snapshot from the 2026-06-03 audit. Run the [`audit` skill](.claude/skills/audi
 
 ### Hygiene
 
-- 🔵 Two `TODO` markers track known pending work: `lib/services/user.ts:11` (move the direct db read to an edge fn — the convention violation above) and `components/scanner/ScannerSheet.tsx:101` (scanner submit flow, not yet built).
+- 🔵 `lib/services/inbound.ts:79` — TODO marker for consolidating barcode resolution into a single `resolve-barcodes` edge function (backend, dld-spb).
 
 ### What's clean
 
