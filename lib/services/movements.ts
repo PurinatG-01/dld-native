@@ -18,6 +18,8 @@ export type StockMovementLine = {
   unit_of_measure: string | null;
   lot_number: string | null;
   location_name: string | null;
+  /** Populated when the BE `list-movements` edge function returns it. */
+  item_category: string | null;
 };
 
 export type StockMovement = {

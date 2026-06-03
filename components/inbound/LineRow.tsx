@@ -1,11 +1,14 @@
 import { memo, useCallback } from "react";
 import { View, Text, Pressable } from "react-native";
-import { Package, Trash2, AlertTriangle } from "lucide-react-native";
+import { Trash2, AlertTriangle } from "lucide-react-native";
+import { CategoryIcon } from "@/components/ui/CategoryIcon";
 import { getColor } from "@/lib/color";
+import type { CategoryName } from "@/lib/category-meta";
 
 type Props = {
   lineKey: string;
   name: string;
+  category: CategoryName | null;
   quantity: number;
   unit: string;
   lot: string | null;
@@ -20,6 +23,7 @@ type Props = {
 export const LineRow = memo(function LineRow({
   lineKey,
   name,
+  category,
   quantity,
   unit,
   lot,
@@ -50,13 +54,13 @@ export const LineRow = memo(function LineRow({
     >
       <View
         className={`w-9 h-9 rounded-xl items-center justify-center ${
-          isError ? "bg-destructive/10" : "bg-primary/10"
+          isError ? "bg-destructive/10" : ""
         }`}
       >
         {isError ? (
           <AlertTriangle size={18} color={getColor("destructive")} />
         ) : (
-          <Package size={18} color={getColor("primary")} />
+          <CategoryIcon category={category} size={18} />
         )}
       </View>
       <View className="flex-1 ml-3">

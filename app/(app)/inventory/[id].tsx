@@ -3,12 +3,12 @@ import { View, Text, ScrollView, Pressable } from "react-native"
 import { useLocalSearchParams, useRouter } from "expo-router"
 import {
   ChevronLeft,
-  Package,
   AlertTriangle,
   Thermometer,
   ShieldAlert,
 } from "lucide-react-native"
-import { CATEGORY_META } from "@/lib/category-meta"
+import { CategoryIcon } from "@/components/ui/CategoryIcon"
+import type { CategoryName } from "@/lib/category-meta"
 import {
   getItemStock,
   type GetItemStockResult,
@@ -182,24 +182,7 @@ export default function InventoryDetailScreen() {
           {/* Item header card */}
           <View className="bg-card rounded-xl border border-border p-6">
             <View className="flex-row items-start gap-4 mb-5">
-              {(() => {
-                const catMeta = CATEGORY_META[data.item.category]
-                if (catMeta) {
-                  const Icon = catMeta.icon
-                  return (
-                    <View
-                      className={`w-14 h-14 rounded-xl items-center justify-center ${catMeta.bg}`}
-                    >
-                      <Icon size={26} color={getColor(catMeta.iconColorToken)} />
-                    </View>
-                  )
-                }
-                return (
-                  <View className="w-14 h-14 rounded-xl bg-primary/10 items-center justify-center">
-                    <Package size={24} color={getColor("primary")} />
-                  </View>
-                )
-              })()}
+              <CategoryIcon category={data.item.category as CategoryName} size={26} className="w-14 h-14" />
 
               <View className="flex-1">
                 <Text className="text-xl font-bold text-card-foreground mb-1">

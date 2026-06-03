@@ -30,6 +30,7 @@ export function LineList({
       <LineRow
         lineKey={item.key}
         name={item.item?.name ?? "Unidentified item"}
+        category={item.item?.category ?? null}
         quantity={item.quantity}
         unit={item.item?.unit_of_measure ?? ""}
         lot={item.lot_number}

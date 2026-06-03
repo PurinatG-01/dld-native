@@ -1,4 +1,5 @@
 import type { SelectOption } from "@/components/ui/Select";
+import type { CategoryName } from "@/lib/category-meta";
 
 /**
  * Line status. Manual lines are implicitly ready (status omitted). Scanned
@@ -12,7 +13,7 @@ export type InboundLine = {
   /** Local-only key for list rendering / edit / remove. */
   key: string;
   /** Null while a scanned line is unresolved (status `error`). */
-  item: { id: string; name: string; unit_of_measure: string } | null;
+  item: { id: string; name: string; unit_of_measure: string; category: CategoryName } | null;
   quantity: number;
   lot_number: string | null;
   /** Raw user-entered expiry, YYYY-MM-DD or null. */

@@ -1,5 +1,6 @@
 import { View, Text, Pressable } from "react-native";
-import { Plus, Minus, Package } from "lucide-react-native";
+import { Plus, Minus } from "lucide-react-native";
+import { CategoryIcon } from "@/components/ui/CategoryIcon";
 import { getColor } from "@/lib/color";
 import type { ScannedItem } from "./types";
 
@@ -17,9 +18,7 @@ export function ScannedItemRow({ item, isJustAdded, rawMode = false, onIncrement
     <View
       className={`flex-row items-center px-4 py-3 border-b border-border${isJustAdded ? " bg-success-muted/20 border-l-2 border-l-success" : ""}`}
     >
-      <View className="w-9 h-9 rounded-xl bg-primary/10 items-center justify-center">
-        <Package size={18} color={getColor("primary")} />
-      </View>
+      <CategoryIcon category={item.category} size={18} />
       <View className="flex-1 ml-3">
         {rawMode ? (
           <>

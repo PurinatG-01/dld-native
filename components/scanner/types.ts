@@ -1,9 +1,12 @@
+import type { CategoryName } from "@/lib/category-meta";
+
 export type ScanStatus = "idle" | "loading" | "success" | "error";
 
 export type ScannedItem = {
   id: string;
   barcode: string;
   name: string;
+  category: CategoryName | null;
   quantity: number;
   scannedAt: Date;
 };

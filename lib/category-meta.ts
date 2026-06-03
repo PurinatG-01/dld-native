@@ -17,7 +17,7 @@ export type CategoryMeta = {
   iconColorToken: ColorToken;
 };
 
-export const CATEGORY_META: Record<string, CategoryMeta> = {
+export const CATEGORY_META = {
   "Anesthetics & Pharmaceuticals": {
     icon: Pill,
     bg: "bg-violet-100",
@@ -58,4 +58,6 @@ export const CATEGORY_META: Record<string, CategoryMeta> = {
     bg: "bg-orange-100",
     iconColorToken: "category-surgical",
   },
-};
+} as const satisfies Record<string, CategoryMeta>;
+
+export type CategoryName = keyof typeof CATEGORY_META;

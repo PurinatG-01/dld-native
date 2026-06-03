@@ -12,8 +12,10 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { useRouter } from "expo-router"
 import { Package, Search, ChevronUp, ChevronDown } from "lucide-react-native"
-import { CATEGORY_META } from "@/lib/category-meta"
 import { getColor } from "@/lib/color"
+import { CATEGORY_META } from "@/lib/category-meta"
+import { CategoryIcon } from "@/components/ui/CategoryIcon"
+import type { CategoryName } from "@/lib/category-meta"
 import {
   listItems,
   type InventoryItem,
@@ -30,19 +32,6 @@ const SORT_COLUMNS: { key: SortBy; label: string }[] = [
   { key: "category", label: "Category" },
   { key: "unit_of_measure", label: "Unit" },
 ]
-
-function CategoryIcon({ category }: { category: string }) {
-  const meta = CATEGORY_META[category]
-  if (!meta) return <View className="w-9 h-9 rounded-xl bg-muted" />
-  const Icon = meta.icon
-  return (
-    <View
-      className={`w-9 h-9 rounded-xl items-center justify-center ${meta.bg}`}
-    >
-      <Icon size={18} color={getColor(meta.iconColorToken)} />
-    </View>
-  )
-}
 
 function SkeletonRow() {
   return (
@@ -101,7 +90,7 @@ const InventoryRow = memo(function InventoryRow({
       onPress={handlePress}
       className="flex-row items-center px-4 py-3 border-b border-border bg-card active:bg-muted/50"
     >
-      <CategoryIcon category={category} />
+      <CategoryIcon category={category as CategoryName} />
       <View className="flex-1 ml-3">
         <Text
           className="text-sm font-medium text-card-foreground"

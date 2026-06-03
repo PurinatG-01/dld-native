@@ -10,7 +10,7 @@ import type { InboundLine, InboundState } from "@/components/inbound/types";
 function makeLine(over: Partial<InboundLine> = {}): InboundLine {
   return {
     key: makeLineKey(),
-    item: { id: "item-1", name: "Amoxicillin", unit_of_measure: "box" },
+    item: { id: "item-1", name: "Amoxicillin", unit_of_measure: "box", category: "Disposables & Office" as const },
     quantity: 2,
     lot_number: null,
     expiry_date: null,

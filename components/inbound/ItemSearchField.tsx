@@ -8,11 +8,12 @@ import {
 } from "react-native";
 import { Search, X } from "lucide-react-native";
 import { getColor } from "@/lib/color";
+import type { CategoryName } from "@/lib/category-meta";
 import { listItems, type InventoryItem } from "@/lib/services/inventory";
 
 const SEARCH_DEBOUNCE_MS = 500;
 
-type Selected = { id: string; name: string; unit_of_measure: string };
+type Selected = { id: string; name: string; unit_of_measure: string; category: CategoryName };
 
 type Props = {
   value: Selected | null;
@@ -59,6 +60,7 @@ export function ItemSearchField({ value, onSelect, onClear }: Props) {
         id: item.id,
         name: item.name,
         unit_of_measure: item.unit_of_measure,
+        category: item.category as CategoryName,
       });
       setInput("");
       setQuery("");

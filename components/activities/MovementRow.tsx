@@ -9,13 +9,16 @@ import Animated, {
 } from "react-native-reanimated"
 import { MessageCircleWarning, ChevronDown } from "lucide-react-native"
 import { getColor } from "@/lib/color"
+import { CategoryIcon } from "@/components/ui/CategoryIcon"
+import type { CategoryName } from "@/lib/category-meta"
 import { ACTION_META, formatMovementDate } from "./constants"
 import type { MovementRowProps, StockMovementLine } from "./types"
 
 function LineRow({ line }: { line: StockMovementLine }) {
   return (
     <View className="flex-row items-start px-4 py-2.5 border-t border-border">
-      <View className="flex-1 pr-3">
+      <CategoryIcon category={line.item_category as CategoryName} size={18} />
+      <View className="flex-1 ml-3 pr-3">
         <Text className="text-sm text-card-foreground" numberOfLines={1}>
           {line.item_name ?? "Unknown item"}
         </Text>

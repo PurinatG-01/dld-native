@@ -33,6 +33,7 @@ import type {
   ScanStatus,
 } from "@/components/scanner/types";
 import type { InboundLine } from "@/components/inbound/types";
+import type { CategoryName } from "@/lib/category-meta";
 
 // Barcode symbologies we decode. GS1 DataMatrix (2D) is preferred over linear
 // codes when both are seen in the same frame (see the collect-window below).
@@ -80,7 +81,8 @@ function scanReducer(state: ScanState, action: ScanAction): ScanState {
 function upsertScan(
   prev: ScannedItem[],
   barcode: string,
-  name: string
+  name: string,
+  category: CategoryName | null,
 ): ScannedItem[] {
   const existing = prev.find((i) => i.barcode === barcode);
   if (existing) {
@@ -93,6 +95,7 @@ function upsertScan(
       id: `${Date.now()}-${Math.random()}`,
       barcode,
       name,
+      category,
       quantity: 1,
       scannedAt: new Date(),
     },
@@ -177,7 +180,7 @@ export default function ScannerModal() {
       dispatch({ type: "SCAN_START", barcode: data });
 
       if (isInbound) {
-        setScannedItems((prev) => upsertScan(prev, data, ""));
+        setScannedItems((prev) => upsertScan(prev, data, "", null));
         dispatch({ type: "SCAN_SUCCESS", barcode: data });
         return;
       }
@@ -188,7 +191,7 @@ export default function ScannerModal() {
             dispatch({ type: "SCAN_ERROR", barcode: data });
             return;
           }
-          setScannedItems((prev) => upsertScan(prev, data, inventoryItem.name));
+          setScannedItems((prev) => upsertScan(prev, data, inventoryItem.name, inventoryItem.category as CategoryName));
           dispatch({ type: "SCAN_SUCCESS", barcode: data });
         })
         .catch(() => dispatch({ type: "SCAN_ERROR", barcode: data }));
@@ -226,7 +229,7 @@ export default function ScannerModal() {
 
     setTimeout(() => {
       setScannedItems((prev) =>
-        upsertScan(prev, mock.barcode, isInbound ? "" : mock.name)
+        upsertScan(prev, mock.barcode, isInbound ? "" : mock.name, null)
       );
       dispatch({ type: "SCAN_SUCCESS", barcode: mock.barcode });
     }, 600);

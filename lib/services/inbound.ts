@@ -1,12 +1,13 @@
 import { supabase } from "@/lib/supabase/client";
 import { lookupItemByBarcode } from "@/lib/services/inventory";
+import type { CategoryName } from "@/lib/category-meta";
 
 export type RefOption = { id: string; name: string };
 
 /** One barcode resolved against the catalog; `item` null = unresolved. */
 export type ResolvedScan = {
   barcode: string;
-  item: { id: string; name: string; unit_of_measure: string } | null;
+  item: { id: string; name: string; unit_of_measure: string; category: CategoryName } | null;
 };
 
 export type InboundRefData = {
@@ -94,6 +95,7 @@ export async function resolveScannedBarcodes(
                 id: item.id,
                 name: item.name,
                 unit_of_measure: item.unit_of_measure,
+                category: item.category as CategoryName,
               }
             : null,
         };
