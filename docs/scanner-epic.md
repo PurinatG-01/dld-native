@@ -3,8 +3,8 @@
 > Living documentation for the barcode-scanner feature. Describes **current implemented logic**, not a plan or spec.
 > Parent context: [`AGENTS.md`](../AGENTS.md). Original design notes for this feature live in Notion (Dental Logistics → Tech) and in git history.
 >
-> Status: 🟡 In progress — scan + lookup live, **submit flow not built** (blocked on `create-movement` edge function).
-> Last updated: 30 May 2026 (commit `d7dd8db`).
+> Status: 🟡 In progress — two modes. **Default mode** (search tab): live lookup, standalone submit not built (blocked on `create-movement`). **Inbound batch mode** (`?mode=inbound`): raw multi-scan → commit → batch-resolve → hands lines to the inbound form (Story 2). Tap-to-focus unsupported (no expo-camera 17 API); torch + autofocus only.
+> Last updated: 3 Jun 2026.
 
 ---
 
@@ -26,6 +26,25 @@ Let clinic staff point the phone camera at an item barcode, look it up against l
 | `components/scanner/ScannerSheet.tsx` | Swipeable bottom sheet container + pan/snap gesture. |
 | `components/scanner/ScannedItemList.tsx` | `FlatList` of scanned items, loading skeleton row, empty state. |
 | `components/scanner/ScannedItemRow.tsx` | Single row: icon, name, barcode, +/- quantity stepper. |
+
+## Modes
+
+The modal serves two flows, branched on the `mode` route param (`useLocalSearchParams`):
+
+- **default** (no param) — opened from the `search`-role tab. Each scan calls
+  `lookupItemByBarcode` live, builds the scanned-items list, and `handleClose` dismisses to the
+  dashboard. Standalone submit still not built (`create-movement` blocker).
+- **`mode="inbound"`** — pushed from the inbound screen (`router.push("/scanner-modal?mode=inbound")`).
+  Scans are recorded **raw** (`{ barcode, quantity }`, **no per-scan lookup**); rows show the
+  barcode (`rawMode`). A **Commit** button (`ScannerSheet`, shown when `onCommit` is set) moves the
+  screen to a full-screen **resolving** state (`committing`), calls `resolveScannedBarcodes`
+  (`lib/services/inbound.ts`, currently mocked), maps each scan → an `InboundLine`
+  (`status: "ready"` if resolved, else `"error"`), stashes the batch via
+  `setScanBatchResult` (`lib/scanner-state.ts`), and `router.back()`s to the inbound form.
+
+Both modes share: `barcodeScannerSettings={{ barcodeTypes: [datamatrix, code128, ean13, upc_a,
+upc_e] }}`, a **torch toggle** (`enableTorch`), and a ~150ms collect window that prefers a 2D
+(GS1 DataMatrix) read over a linear one in the same frame.
 
 ## Navigation / modal lifecycle
 
@@ -121,8 +140,8 @@ Full-screen `CameraView` (back camera, `onBarcodeScanned`), overlaid with:
 
 | | |
 | --- | --- |
-| ✅ Done | Permission gate · live camera scan · barcode lookup · dedupe/increment · 4-state machine · status pill · animated viewfinder + sweep · swipeable sheet · quantity steppers · dev simulate button |
-| 🔴 Not done | **Submit flow** (write scanned items as a stock movement) · choosing movement type/location · success/receipt confirmation · multi-barcode formats config · haptics |
+| ✅ Done | Permission gate · live camera scan · barcode lookup · dedupe/increment · 4-state machine · status pill · animated viewfinder + sweep · swipeable sheet · quantity steppers · dev simulate button · multi-format barcode config · torch toggle · GS1/2D collect-window preference · **inbound batch mode** (raw multi-scan → commit → batch-resolve → hand lines to the inbound form) |
+| 🔴 Not done | **Default-mode submit flow** (write scanned items as a stock movement, blocked on `create-movement`) · GS1 lot/expiry parse (Story 3) · tap-to-focus (no expo-camera 17 API) · haptics |
 
 ## Next steps
 

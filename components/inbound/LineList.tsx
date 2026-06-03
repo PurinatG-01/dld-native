@@ -29,12 +29,14 @@ export function LineList({
     ({ item }: { item: InboundLine }) => (
       <LineRow
         lineKey={item.key}
-        name={item.item.name}
+        name={item.item?.name ?? "Unidentified item"}
         quantity={item.quantity}
-        unit={item.item.unit_of_measure}
+        unit={item.item?.unit_of_measure ?? ""}
         lot={item.lot_number}
         expiry={item.expiry_date}
         locationName={locationName(item.location_id)}
+        barcode={item.barcode ?? null}
+        isError={item.status === "error"}
         onEdit={onEdit}
         onRemove={onRemove}
       />

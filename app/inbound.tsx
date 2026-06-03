@@ -1,9 +1,10 @@
 import { useReducer, useEffect, useState, useCallback } from "react";
 import { View, Text, Pressable, Alert, ActivityIndicator } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Plus } from "lucide-react-native";
+import { Plus, ScanLine } from "lucide-react-native";
 import { getColor } from "@/lib/color";
+import { markModalOpened, consumeScanBatchResult } from "@/lib/scanner-state";
 import { FlashMessage } from "@/components/ui/FlashMessage";
 import { SessionHeader } from "@/components/inbound/SessionHeader";
 import { SessionHeaderSkeleton } from "@/components/inbound/SessionHeaderSkeleton";
@@ -108,6 +109,22 @@ export default function InboundScreen() {
     dispatch({ type: "REMOVE_LINE", key });
   }, []);
 
+  // Open the scanner in inbound batch mode (pushed over this screen).
+  const handleScan = useCallback(() => {
+    markModalOpened();
+    router.push({ pathname: "/scanner-modal", params: { mode: "inbound" } });
+  }, [router]);
+
+  // Pull in any scanned batch when this screen regains focus.
+  useFocusEffect(
+    useCallback(() => {
+      const batch = consumeScanBatchResult();
+      if (batch && batch.length > 0) {
+        dispatch({ type: "ADD_SCANNED_LINES", lines: batch });
+      }
+    }, [])
+  );
+
   const handleSubmit = useCallback(async () => {
     if (!canSubmit(state)) return;
     dispatch({ type: "SUBMIT_START" });
@@ -116,8 +133,9 @@ export default function InboundScreen() {
         supplier_id: state.supplierId,
         branch_id: state.branchId!,
         location_id: state.defaultLocationId!,
+        // canSubmit guarantees every line is resolved (item present).
         lines: state.lines.map((l) => ({
-          item_id: l.item.id,
+          item_id: l.item!.id,
           quantity: l.quantity,
           lot_number: l.lot_number,
           expiry_date: l.expiry_date,
@@ -147,6 +165,7 @@ export default function InboundScreen() {
 
   const submitting = state.submit === "submitting";
   const submittable = canSubmit(state);
+  const errorCount = state.lines.filter((l) => l.status === "error").length;
 
   // Wait for the first inbound-refdata load before showing the form.
   if (loading) {
@@ -209,14 +228,31 @@ export default function InboundScreen() {
           <FlashMessage message={state.errorMsg} variant="error" />
         ) : null}
 
-        <Pressable
-          onPress={() => setEditor({ line: null })}
-          disabled={!state.branchId}
-          className="flex-row items-center justify-center gap-2 border border-border rounded-lg py-3 active:opacity-70 disabled:opacity-40"
-        >
-          <Plus size={16} color={getColor("primary")} />
-          <Text className="text-sm font-semibold text-primary">Add line</Text>
-        </Pressable>
+        {errorCount > 0 ? (
+          <Text className="text-xs text-destructive text-center">
+            {errorCount} {errorCount === 1 ? "item needs" : "items need"} attention before submitting.
+          </Text>
+        ) : null}
+
+        <View className="flex-row gap-3">
+          <Pressable
+            onPress={() => setEditor({ line: null })}
+            disabled={!state.branchId}
+            className="flex-1 flex-row items-center justify-center gap-2 border border-border rounded-lg py-3 active:opacity-70 disabled:opacity-40"
+          >
+            <Plus size={16} color={getColor("primary")} />
+            <Text className="text-sm font-semibold text-primary">Add line</Text>
+          </Pressable>
+
+          <Pressable
+            onPress={handleScan}
+            disabled={!state.branchId}
+            className="flex-1 flex-row items-center justify-center gap-2 border border-border rounded-lg py-3 active:opacity-70 disabled:opacity-40"
+          >
+            <ScanLine size={16} color={getColor("primary")} />
+            <Text className="text-sm font-semibold text-primary">Scan items</Text>
+          </Pressable>
+        </View>
 
         <Pressable
           onPress={handleSubmit}

@@ -67,6 +67,56 @@ describe("inboundReducer", () => {
     expect(s.lines).toHaveLength(0);
   });
 
+  describe("ADD_SCANNED_LINES", () => {
+    it("inherits the session default location when none is set", () => {
+      const start = { ...initialInboundState, defaultLocationId: "loc-1" };
+      const scanned = makeLine({ key: "s1", location_id: null, status: "ready" });
+      const s = inboundReducer(start, {
+        type: "ADD_SCANNED_LINES",
+        lines: [scanned],
+      });
+      expect(s.lines[0].location_id).toBe("loc-1");
+    });
+
+    it("merges a ready scanned line into an existing ready line for the same item", () => {
+      const existing = makeLine({ key: "a", quantity: 2, status: "ready" });
+      const start = {
+        ...initialInboundState,
+        defaultLocationId: "loc-1",
+        lines: [existing],
+      };
+      const scanned = makeLine({ key: "s1", quantity: 3, status: "ready" });
+      const s = inboundReducer(start, {
+        type: "ADD_SCANNED_LINES",
+        lines: [scanned],
+      });
+      expect(s.lines).toHaveLength(1);
+      expect(s.lines[0].key).toBe("a");
+      expect(s.lines[0].quantity).toBe(5);
+    });
+
+    it("prepends error lines without merging", () => {
+      const errLineA = makeLine({
+        key: "e1",
+        item: null,
+        barcode: "GTIN-X",
+        status: "error",
+      });
+      const errLineB = makeLine({
+        key: "e2",
+        item: null,
+        barcode: "GTIN-X",
+        status: "error",
+      });
+      const start = { ...initialInboundState, lines: [errLineA] };
+      const s = inboundReducer(start, {
+        type: "ADD_SCANNED_LINES",
+        lines: [errLineB],
+      });
+      expect(s.lines).toHaveLength(2);
+    });
+  });
+
   it("ignores SUBMIT_START while already submitting (double-submit guard)", () => {
     const start: InboundState = { ...initialInboundState, submit: "submitting" };
     const s = inboundReducer(start, { type: "SUBMIT_START" });
@@ -96,6 +146,12 @@ describe("isLineValid", () => {
     expect(isLineValid(makeLine({ quantity: 0 }))).toBe(false);
     expect(isLineValid(makeLine({ quantity: -1 }))).toBe(false);
     expect(isLineValid(makeLine({ quantity: 1.5 }))).toBe(false);
+  });
+
+  it("false for an unresolved error line (no item)", () => {
+    expect(
+      isLineValid(makeLine({ item: null, barcode: "GTIN-X", status: "error" }))
+    ).toBe(false);
   });
 });
 
@@ -132,5 +188,15 @@ describe("canSubmit", () => {
 
   it("false without a supplier", () => {
     expect(canSubmit({ ...ready, supplierId: null })).toBe(false);
+  });
+
+  it("false when any line is an unresolved error line", () => {
+    const errLine = makeLine({
+      key: "e1",
+      item: null,
+      barcode: "GTIN-X",
+      status: "error",
+    });
+    expect(canSubmit({ ...ready, lines: [...ready.lines, errLine] })).toBe(false);
   });
 });

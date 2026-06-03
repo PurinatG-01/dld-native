@@ -1,6 +1,13 @@
 import { supabase } from "@/lib/supabase/client";
+import { lookupItemByBarcode } from "@/lib/services/inventory";
 
 export type RefOption = { id: string; name: string };
+
+/** One barcode resolved against the catalog; `item` null = unresolved. */
+export type ResolvedScan = {
+  barcode: string;
+  item: { id: string; name: string; unit_of_measure: string } | null;
+};
 
 export type InboundRefData = {
   suppliers: RefOption[];
@@ -62,6 +69,39 @@ export async function getInboundRefData(
   }
 
   return res.json();
+}
+
+/**
+ * Resolves a batch of scanned barcodes to catalog items in one call, used by
+ * the inbound batch-scan flow after the user commits the scanned list.
+ *
+ * TODO(dld-spb): replace with a single `resolve-barcodes` edge function that
+ * takes the barcode list and returns the matches server-side. Mocked here by
+ * looping the existing single-barcode lookup — runs once at commit (not per
+ * scan), so per-scan API load is still avoided.
+ */
+export async function resolveScannedBarcodes(
+  barcodes: string[]
+): Promise<ResolvedScan[]> {
+  return Promise.all(
+    barcodes.map(async (barcode) => {
+      try {
+        const item = await lookupItemByBarcode(barcode);
+        return {
+          barcode,
+          item: item
+            ? {
+                id: item.id,
+                name: item.name,
+                unit_of_measure: item.unit_of_measure,
+              }
+            : null,
+        };
+      } catch {
+        return { barcode, item: null };
+      }
+    })
+  );
 }
 
 /** Records an inbound delivery via the receive-inbound edge function. */

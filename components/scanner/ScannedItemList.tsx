@@ -10,20 +10,23 @@ type Props = {
   justAddedBarcode: string | null;
   onAdjustQuantity: (id: string, delta: number) => void;
   bottomInset: number;
+  rawMode?: boolean;
 };
 
 type RowProps = {
   item: ScannedItem;
   isJustAdded: boolean;
+  rawMode: boolean;
   onIncrement: () => void;
   onDecrement: () => void;
 };
 
-const Row = memo(function Row({ item, isJustAdded, onIncrement, onDecrement }: RowProps) {
+const Row = memo(function Row({ item, isJustAdded, rawMode, onIncrement, onDecrement }: RowProps) {
   return (
     <ScannedItemRow
       item={item}
       isJustAdded={isJustAdded}
+      rawMode={rawMode}
       onIncrement={onIncrement}
       onDecrement={onDecrement}
     />
@@ -36,17 +39,19 @@ export function ScannedItemList({
   justAddedBarcode,
   onAdjustQuantity,
   bottomInset,
+  rawMode = false,
 }: Props) {
   const renderItem = useCallback(
     ({ item }: { item: ScannedItem }) => (
       <Row
         item={item}
         isJustAdded={scanStatus === "success" && item.barcode === justAddedBarcode}
+        rawMode={rawMode}
         onIncrement={() => onAdjustQuantity(item.id, 1)}
         onDecrement={() => onAdjustQuantity(item.id, -1)}
       />
     ),
-    [scanStatus, justAddedBarcode, onAdjustQuantity],
+    [scanStatus, justAddedBarcode, onAdjustQuantity, rawMode],
   );
 
   return (

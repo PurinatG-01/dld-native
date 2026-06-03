@@ -1,23 +1,29 @@
-import { View, Text } from "react-native";
+import { View, Text } from "react-native"
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
   type SharedValue,
-} from "react-native-reanimated";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ScannedItemList } from "./ScannedItemList";
-import { SCREEN_HEIGHT, SNAP_COLLAPSED, SHEET_EXPANDED_MIN_GAP } from "./constants";
-import type { ScannedItem, ScanState } from "./types";
+} from "react-native-reanimated"
+import { Gesture, GestureDetector } from "react-native-gesture-handler"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
+import { ScannedItemList } from "./ScannedItemList"
+import {
+  SCREEN_HEIGHT,
+  SNAP_COLLAPSED,
+  SHEET_EXPANDED_MIN_GAP,
+} from "./constants"
+import type { ScannedItem, ScanState } from "./types"
 
 type Props = {
-  translateY: SharedValue<number>;
-  items: ScannedItem[];
-  scanState: ScanState;
-  onAdjustQuantity: (id: string, delta: number) => void;
-  bottomInset: number;
-};
+  translateY: SharedValue<number>
+  items: ScannedItem[]
+  scanState: ScanState
+  onAdjustQuantity: (id: string, delta: number) => void
+  bottomInset: number
+  /** Inbound batch mode: rows show the raw barcode (item not yet resolved). */
+  rawMode?: boolean
+}
 
 export function ScannerSheet({
   translateY,
@@ -25,39 +31,48 @@ export function ScannerSheet({
   scanState,
   onAdjustQuantity,
   bottomInset,
+  rawMode = false,
 }: Props) {
-  const startY = useSharedValue(0);
-  const insets = useSafeAreaInsets();
-  const snapExpanded = insets.top + SHEET_EXPANDED_MIN_GAP;
+  const startY = useSharedValue(0)
+  const insets = useSafeAreaInsets()
+  const snapExpanded = insets.top + SHEET_EXPANDED_MIN_GAP
 
   const panGesture = Gesture.Pan()
     .onStart(() => {
-      startY.value = translateY.value;
+      startY.value = translateY.value
     })
     .onUpdate((e) => {
       translateY.value = Math.max(
         snapExpanded,
-        Math.min(SNAP_COLLAPSED, startY.value + e.translationY)
-      );
+        Math.min(SNAP_COLLAPSED, startY.value + e.translationY),
+      )
     })
     .onEnd((e) => {
       const shouldExpand =
-        e.velocityY < -500 || translateY.value < SNAP_COLLAPSED / 2;
+        e.velocityY < -500 || translateY.value < SNAP_COLLAPSED / 2
       translateY.value = withSpring(
         shouldExpand ? snapExpanded : SNAP_COLLAPSED,
-        { velocity: e.velocityY, damping: 20, stiffness: 200, overshootClamping: true }
-      );
-    });
+        {
+          velocity: e.velocityY,
+          damping: 20,
+          stiffness: 200,
+          overshootClamping: true,
+        },
+      )
+    })
 
   const sheetAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],
-  }));
+  }))
 
   const justAddedBarcode =
-    scanState.status === "success" ? scanState.barcode : null;
+    scanState.status === "success" ? scanState.barcode : null
 
   return (
-    <Animated.View className="bg-card absolute inset-x-0 top-0" style={[{ bottom: -SCREEN_HEIGHT }, sheetAnimatedStyle]}>
+    <Animated.View
+      className="bg-card absolute inset-x-0 top-0"
+      style={[{ bottom: -SCREEN_HEIGHT }, sheetAnimatedStyle]}
+    >
       <View
         className="rounded-t-2xl overflow-hidden bg-card"
         style={{ height: SCREEN_HEIGHT }}
@@ -84,9 +99,9 @@ export function ScannerSheet({
           justAddedBarcode={justAddedBarcode}
           onAdjustQuantity={onAdjustQuantity}
           bottomInset={bottomInset}
+          rawMode={rawMode}
         />
       </View>
     </Animated.View>
-  );
+  )
 }
-

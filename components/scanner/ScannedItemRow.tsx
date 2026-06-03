@@ -6,11 +6,13 @@ import type { ScannedItem } from "./types";
 type Props = {
   item: ScannedItem;
   isJustAdded: boolean;
+  /** Inbound batch mode: item name unknown until commit-time resolution. */
+  rawMode?: boolean;
   onIncrement: () => void;
   onDecrement: () => void;
 };
 
-export function ScannedItemRow({ item, isJustAdded, onIncrement, onDecrement }: Props) {
+export function ScannedItemRow({ item, isJustAdded, rawMode = false, onIncrement, onDecrement }: Props) {
   return (
     <View
       className={`flex-row items-center px-4 py-3 border-b border-border${isJustAdded ? " bg-success-muted/20 border-l-2 border-l-success" : ""}`}
@@ -19,12 +21,25 @@ export function ScannedItemRow({ item, isJustAdded, onIncrement, onDecrement }: 
         <Package size={18} color={getColor("primary")} />
       </View>
       <View className="flex-1 ml-3">
-        <Text className="text-sm font-medium text-card-foreground" numberOfLines={1}>
-          {item.name}
-        </Text>
-        <Text className="text-xs text-muted-foreground mt-0.5 font-mono">
-          {item.barcode}
-        </Text>
+        {rawMode ? (
+          <>
+            <Text className="text-sm font-medium text-card-foreground font-mono" numberOfLines={1}>
+              {item.barcode}
+            </Text>
+            <Text className="text-xs text-muted-foreground mt-0.5">
+              Identified on commit
+            </Text>
+          </>
+        ) : (
+          <>
+            <Text className="text-sm font-medium text-card-foreground" numberOfLines={1}>
+              {item.name}
+            </Text>
+            <Text className="text-xs text-muted-foreground mt-0.5 font-mono">
+              {item.barcode}
+            </Text>
+          </>
+        )}
       </View>
       <View className="flex-row items-center gap-2 ml-3">
         <Pressable

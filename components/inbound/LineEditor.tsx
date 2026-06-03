@@ -69,6 +69,9 @@ export function LineEditor({
         lot_number: lot.trim() || null,
         expiry_date: expiry.trim() || null,
         location_id: locationId,
+        barcode: editing?.barcode ?? null,
+        // Picking an item clears any scan-resolution error.
+        status: "ready",
       }
     : null;
 
@@ -107,6 +110,15 @@ export function LineEditor({
           contentContainerClassName="p-5 gap-5"
           keyboardShouldPersistTaps="handled"
         >
+          {editing?.status === "error" ? (
+            <View className="rounded-lg border border-destructive bg-destructive/5 px-3 py-2.5">
+              <Text className="text-xs text-destructive">
+                Scanned code{editing.barcode ? ` ${editing.barcode}` : ""} didn’t
+                match an item. Pick the correct item below to fix this line.
+              </Text>
+            </View>
+          ) : null}
+
           <ItemSearchField
             value={item}
             onSelect={setItem}
