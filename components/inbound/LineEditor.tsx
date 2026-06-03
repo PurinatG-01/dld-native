@@ -13,6 +13,7 @@ import { getColor } from "@/lib/color";
 import { Select } from "@/components/ui/Select";
 import { ItemSearchField } from "./ItemSearchField";
 import { makeLineKey, isLineValid } from "@/lib/inbound-reducer";
+import { EXPIRY_RE } from "./constants";
 import type { InboundLine, SelectOption } from "./types";
 
 type Props = {
@@ -24,8 +25,6 @@ type Props = {
   onSave: (line: InboundLine) => void;
   onCancel: () => void;
 };
-
-const EXPIRY_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 export function LineEditor({
   visible,
