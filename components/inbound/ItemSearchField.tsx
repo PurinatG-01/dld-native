@@ -8,6 +8,7 @@ import {
 } from "react-native";
 import { Search, X } from "lucide-react-native";
 import { getColor } from "@/lib/color";
+import { CategoryIcon } from "@/components/ui/CategoryIcon";
 import type { CategoryName } from "@/lib/category-meta";
 import { listItems, type InventoryItem } from "@/lib/services/inventory";
 
@@ -76,7 +77,8 @@ export function ItemSearchField({ value, onSelect, onClear }: Props) {
           Item
         </Text>
         <View className="flex-row items-center border border-border rounded-lg bg-card px-3 py-3">
-          <View className="flex-1">
+          <CategoryIcon category={value.category} size={18} />
+          <View className="flex-1 ml-3">
             <Text
               className="text-sm font-medium text-card-foreground"
               numberOfLines={1}
@@ -124,14 +126,17 @@ export function ItemSearchField({ value, onSelect, onClear }: Props) {
             <Pressable
               key={item.id}
               onPress={() => handlePick(item)}
-              className="px-3 py-3 border-b border-border active:bg-muted/50"
+              className="flex-row items-center px-3 py-3 border-b border-border active:bg-muted/50"
             >
-              <Text className="text-sm text-card-foreground" numberOfLines={1}>
-                {item.name}
-              </Text>
-              <Text className="text-xs text-muted-foreground mt-0.5">
-                {item.category} · {item.unit_of_measure}
-              </Text>
+              <CategoryIcon category={item.category as CategoryName} size={18} />
+              <View className="flex-1 ml-3">
+                <Text className="text-sm text-card-foreground" numberOfLines={1}>
+                  {item.name}
+                </Text>
+                <Text className="text-xs text-muted-foreground mt-0.5">
+                  {item.category} · {item.unit_of_measure}
+                </Text>
+              </View>
             </Pressable>
           ))}
         </View>
