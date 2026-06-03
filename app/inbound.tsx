@@ -31,6 +31,9 @@ export default function InboundScreen() {
   const [branches, setBranches] = useState<RefOption[]>([]);
   const [locations, setLocations] = useState<RefOption[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  // Bumped to re-run the initial load on retry.
+  const [reloadKey, setReloadKey] = useState(0);
 
   // Editor: null = closed; { line } open (line null = add).
   const [editor, setEditor] = useState<{ line: InboundLine | null } | null>(
@@ -41,6 +44,8 @@ export default function InboundScreen() {
   // the branch effect once the branch is set).
   useEffect(() => {
     let cancelled = false;
+    setLoading(true);
+    setLoadError(null);
     getInboundRefData()
       .then((ref) => {
         if (cancelled) return;
@@ -51,12 +56,17 @@ export default function InboundScreen() {
           dispatch({ type: "SET_BRANCH", branchId: ref.branch_id });
         }
       })
-      .catch(() => {})
+      .catch((e) => {
+        if (cancelled) return;
+        setLoadError(
+          e instanceof Error ? e.message : "Failed to load form data."
+        );
+      })
       .finally(() => !cancelled && setLoading(false));
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [reloadKey]);
 
   // Load locations whenever the selected branch changes.
   useEffect(() => {
@@ -147,6 +157,22 @@ export default function InboundScreen() {
           <Skeleton className="h-14 w-full rounded-lg" />
           <Skeleton className="h-14 w-full rounded-lg" />
         </View>
+      </View>
+    );
+  }
+
+  // Initial load failed — surface the error with a retry instead of an
+  // empty form the user can't fill.
+  if (loadError) {
+    return (
+      <View className="flex-1 bg-background px-5 pt-4 gap-3">
+        <FlashMessage message={loadError} variant="error" />
+        <Pressable
+          onPress={() => setReloadKey((k) => k + 1)}
+          className="flex-row items-center justify-center gap-2 border border-border rounded-lg py-3 active:opacity-70"
+        >
+          <Text className="text-sm font-semibold text-primary">Retry</Text>
+        </Pressable>
       </View>
     );
   }

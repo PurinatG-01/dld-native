@@ -26,13 +26,17 @@ import {
 import { getColor } from "@/lib/color";
 import type { ScanState, ScanAction, ScannedItem, ScanStatus } from "@/components/scanner/types";
 
-const MOCK_SCAN_ITEMS = [
-  { barcode: "MOCK-001", name: "Amoxicillin 500mg" },
-  { barcode: "MOCK-002", name: "Nitrile Gloves (Box)" },
-  { barcode: "MOCK-003", name: "Dental Mirror #5" },
-  { barcode: "MOCK-004", name: "Composite Resin A2" },
-  { barcode: "MOCK-005", name: "Surgical Mask (50-pack)" },
-] as const;
+// Dev-only fixtures for the simulate-scan button (also gated by __DEV__);
+// empty in production so the data never ships.
+const MOCK_SCAN_ITEMS = __DEV__
+  ? ([
+      { barcode: "MOCK-001", name: "Amoxicillin 500mg" },
+      { barcode: "MOCK-002", name: "Nitrile Gloves (Box)" },
+      { barcode: "MOCK-003", name: "Dental Mirror #5" },
+      { barcode: "MOCK-004", name: "Composite Resin A2" },
+      { barcode: "MOCK-005", name: "Surgical Mask (50-pack)" },
+    ] as const)
+  : [];
 
 function scanReducer(state: ScanState, action: ScanAction): ScanState {
   switch (action.type) {
@@ -140,7 +144,7 @@ export default function ScannerModal() {
   );
 
   const handleSimulateScan = useCallback(() => {
-    if (scanState.status !== "idle") return;
+    if (!__DEV__ || scanState.status !== "idle") return;
     const mock = MOCK_SCAN_ITEMS[mockIndexRef.current % MOCK_SCAN_ITEMS.length];
     mockIndexRef.current += 1;
 
