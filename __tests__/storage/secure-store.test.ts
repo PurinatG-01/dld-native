@@ -12,7 +12,7 @@ jest.mock("expo-secure-store", () => ({
   }),
 }));
 
-import { SecureStoreAdapter } from "@/lib/supabase/secure-store";
+import { SecureStoreAdapter } from "@/lib/storage/secure-store";
 
 beforeEach(() => mockStore.clear());
 
